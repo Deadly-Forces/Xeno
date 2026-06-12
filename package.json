@@ -1,0 +1,24 @@
+{
+  "name": "xeno-crm",
+  "private": true,
+  "packageManager": "npm@10.8.2",
+  "scripts": {
+    "build": "turbo build",
+    "dev": "turbo dev",
+    "lint": "turbo lint",
+    "test": "turbo test",
+    "typecheck": "turbo typecheck",
+    "seed": "npm run seed --workspace=@xeno/crm",
+    "load-test": "node scripts/load-test.mjs",
+    "e2e": "npx playwright test --config apps/crm/playwright.config.ts"
+  },
+  "workspaces": ["apps/*", "packages/*"],
+  "overrides": {
+    "postcss": "8.5.10",
+    "uuid": "11.1.1"
+  },
+  "devDependencies": {
+    "turbo": "^2.5.4",
+    "typescript": "^5.8.3"
+  }
+}

@@ -1,0 +1,13 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* { box-sizing: border-box; }
+body { margin: 0; color: #17201d; background: #f5f7f5; font-family: Inter, ui-sans-serif, system-ui, sans-serif; letter-spacing: 0; }
+button, input, select, textarea { font: inherit; }
+button { cursor: pointer; }
+.panel { border: 1px solid #dce3df; background: white; border-radius: 8px; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: .5rem; min-height: 2.25rem; border-radius: 6px; border: 1px solid #cdd7d2; padding: .45rem .75rem; background: white; font-size: .875rem; font-weight: 600; }
+.btn-primary { border-color: #147d64; background: #147d64; color: white; }
+.input { width: 100%; border: 1px solid #cdd7d2; border-radius: 6px; padding: .55rem .7rem; background: white; }
+.label { font-size: .75rem; font-weight: 700; color: #5e6d67; text-transform: uppercase; }

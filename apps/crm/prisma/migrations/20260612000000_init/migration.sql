@@ -1,0 +1,20 @@
+CREATE TYPE "Channel" AS ENUM ('WHATSAPP', 'SMS', 'EMAIL', 'RCS');
+CREATE TYPE "CampaignStatus" AS ENUM ('DRAFT', 'RUNNING', 'COMPLETED', 'FAILED');
+CREATE TYPE "MessageStatus" AS ENUM ('QUEUED', 'SENT', 'DELIVERED', 'FAILED', 'OPENED', 'READ', 'CLICKED');
+
+CREATE TABLE "Customer" ("id" TEXT PRIMARY KEY, "externalId" TEXT NOT NULL UNIQUE, "name" TEXT NOT NULL, "email" TEXT UNIQUE, "phone" TEXT UNIQUE, "tags" TEXT[] NOT NULL, "city" TEXT NOT NULL, "ageGroup" TEXT NOT NULL, "gender" TEXT NOT NULL, "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, "lastOrderAt" TIMESTAMP(3), "totalOrderValue" DECIMAL(12,2) NOT NULL DEFAULT 0, "totalOrders" INTEGER NOT NULL DEFAULT 0, "channel_preference" "Channel" NOT NULL);
+CREATE TABLE "Order" ("id" TEXT PRIMARY KEY, "customerId" TEXT NOT NULL REFERENCES "Customer"("id") ON DELETE CASCADE, "items" JSONB NOT NULL, "totalAmount" DECIMAL(12,2) NOT NULL, "status" TEXT NOT NULL, "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP);
+CREATE TABLE "Segment" ("id" TEXT PRIMARY KEY, "name" TEXT NOT NULL, "description" TEXT NOT NULL, "filterRules" JSONB NOT NULL, "customerCount" INTEGER NOT NULL DEFAULT 0, "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, "createdBy" TEXT NOT NULL);
+CREATE TABLE "Campaign" ("id" TEXT PRIMARY KEY, "name" TEXT NOT NULL, "segmentId" TEXT NOT NULL REFERENCES "Segment"("id"), "channel" "Channel" NOT NULL, "messageTemplate" TEXT NOT NULL, "status" "CampaignStatus" NOT NULL DEFAULT 'DRAFT', "scheduledAt" TIMESTAMP(3), "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, "aiGenerated" BOOLEAN NOT NULL DEFAULT false, "failureReason" TEXT);
+CREATE TABLE "CampaignMessage" ("id" TEXT PRIMARY KEY, "campaignId" TEXT NOT NULL REFERENCES "Campaign"("id") ON DELETE CASCADE, "customerId" TEXT NOT NULL REFERENCES "Customer"("id") ON DELETE CASCADE, "personalizedMessage" TEXT NOT NULL, "status" "MessageStatus" NOT NULL DEFAULT 'QUEUED', "failureReason" TEXT, "sentAt" TIMESTAMP(3), "deliveredAt" TIMESTAMP(3), "openedAt" TIMESTAMP(3), "readAt" TIMESTAMP(3), "clickedAt" TIMESTAMP(3), "externalMessageId" TEXT UNIQUE, UNIQUE("campaignId", "customerId"));
+CREATE TABLE "ReceiptEvent" ("id" TEXT PRIMARY KEY, "campaignMessageId" TEXT NOT NULL REFERENCES "CampaignMessage"("id") ON DELETE CASCADE, "event" "MessageStatus" NOT NULL, "timestamp" TIMESTAMP(3) NOT NULL, "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, UNIQUE("campaignMessageId", "event"));
+CREATE TABLE "ConversionEvent" ("id" TEXT PRIMARY KEY, "campaignMessageId" TEXT NOT NULL REFERENCES "CampaignMessage"("id") ON DELETE CASCADE, "customerId" TEXT NOT NULL REFERENCES "Customer"("id") ON DELETE CASCADE, "orderId" TEXT NOT NULL REFERENCES "Order"("id") ON DELETE CASCADE, "revenue" DECIMAL(12,2) NOT NULL, "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, UNIQUE("campaignMessageId", "orderId"));
+CREATE INDEX "Customer_lastOrderAt_idx" ON "Customer"("lastOrderAt");
+CREATE INDEX "Customer_totalOrderValue_idx" ON "Customer"("totalOrderValue");
+CREATE INDEX "Customer_city_idx" ON "Customer"("city");
+CREATE INDEX "Customer_channel_preference_idx" ON "Customer"("channel_preference");
+CREATE INDEX "Order_customerId_createdAt_idx" ON "Order"("customerId", "createdAt");
+CREATE INDEX "CampaignMessage_campaignId_idx" ON "CampaignMessage"("campaignId");
+CREATE INDEX "CampaignMessage_status_idx" ON "CampaignMessage"("status");
+CREATE INDEX "CampaignMessage_externalMessageId_idx" ON "CampaignMessage"("externalMessageId");
+CREATE INDEX "ReceiptEvent_campaignMessageId_idx" ON "ReceiptEvent"("campaignMessageId");
