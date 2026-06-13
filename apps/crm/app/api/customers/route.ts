@@ -20,7 +20,7 @@ export async function GET(request: Request): Promise<Response> {
     take: limit + 1,
     ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
     orderBy: [{ [sortField]: direction }, { id: "asc" }],
-    select: { id: true, externalId: true, name: true, email: true, phone: true, tags: true, city: true, ageGroup: true, gender: true, lastOrderAt: true, totalOrderValue: true, totalOrders: true, channelPreference: true }
+    select: { id: true, externalId: true, name: true, email: true, phone: true, tags: true, city: true, ageGroup: true, gender: true, lastOrderAt: true, totalOrderValue: true, totalOrders: true, channelPreference: true, consentStatus: true, suppressedAt: true, suppressionReason: true, maxMessagesPerWeek: true }
   });
   const nextCursor = customers.length > limit ? customers[limit - 1]?.id ?? null : null;
   return Response.json({ customers: customers.slice(0, limit), nextCursor });

@@ -58,7 +58,7 @@ Or run the complete stack with containers:
 docker compose up --build
 ```
 
-The CRM runs at `http://localhost:3000`; the channel simulator runs at `http://localhost:4000`. The example password hash represents `northstar-demo`.
+The CRM runs at `http://localhost:3000`; the channel simulator runs at `http://localhost:4000`. The default local `DEMO_PASSWORD` is `password`.
 
 The seed creates workspace `xeno` with `admin@example.com`, `marketer@example.com`, and `analyst@example.com`. All three use `DEMO_PASSWORD` and Argon2id hashes.
 
@@ -76,8 +76,8 @@ The seed creates workspace `xeno` with `admin@example.com`, `marketer@example.co
 | `RECEIPT_HMAC_SECRET` | Both | Shared secret, minimum 32 characters |
 | `NEXTAUTH_SECRET` | CRM | NextAuth JWT signing secret |
 | `NEXTAUTH_URL` | CRM | Public CRM origin |
-| `MARKETER_EMAIL` | CRM | Single-tenant login email |
-| `MARKETER_PASSWORD_SHA256` | CRM | SHA-256 digest of the demo password |
+| `DEMO_PASSWORD` | CRM seed | Local password hashed with Argon2id for seeded users |
+| `E2E_PASSWORD` | Browser tests | Password used by Playwright sign-in helpers |
 | `CRM_RECEIPT_URL` | Channel | Public CRM origin; must target the deployed CRM |
 | `PORT` | Channel | HTTP port, defaults to `4000` |
 | `LOG_LEVEL` | Channel | Pino structured log level |
@@ -222,11 +222,11 @@ Create two Railway projects from this repository. Use `/railway.toml` or `/apps/
 
 ## Known Limitations
 
-- Role enforcement is application-level and single-tenant; production multi-tenancy would require organization-scoped foreign keys and authorization policies.
-- Next.js is intentionally held on the required 14.x line. Current npm advisories include issues fixed only in later Next major versions; deploy behind platform request limits and schedule a Next 15+ migration before production use.
+- Tenant isolation is enforced through organization-scoped records and API queries. PostgreSQL row-level security is not enabled, so authorization remains application-enforced.
+- Next.js is pinned to the patched 15.5 line. Dependency auditing remains required because AI SDK and authentication transitive advisories may require coordinated major upgrades.
 - OpenRouter free-model availability and rate limits can change. Nemotron 3 Nano is pinned for demo responsiveness, but free endpoints are not dependable production infrastructure.
-- Conversion events are modeled and reported but no commerce webhook ingestion route is included.
-- Estimated campaign cost is a fixed demo rate, not provider billing data.
+- Conversion events are ingested through the signed `/api/commerce/orders` webhook and attributed to recent campaign clicks.
+- Delivery cost events use effective-dated provider rate cards. Final invoice reconciliation and taxes remain outside this demo.
 - CSV import supports scalar customer columns; nested orders are intended for JSON import.
 - The visual rule editor supports nested groups and row reordering, but it intentionally omits arbitrary canvas positioning.
 - Live URL and Loom walkthrough are deployment artifacts and are intentionally not fabricated in this repository.

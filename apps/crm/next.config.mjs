@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: "standalone",
-  experimental: { serverComponentsExternalPackages: ["bullmq", "ioredis", "argon2"] },
+  serverExternalPackages: ["bullmq", "ioredis", "argon2"],
   transpilePackages: ["@xeno/shared-types"],
   async headers() { return [{ source: "/(.*)", headers: [
     { key: "X-Content-Type-Options", value: "nosniff" },

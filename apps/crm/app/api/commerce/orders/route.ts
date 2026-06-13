@@ -10,7 +10,9 @@ function valid(body: string, signature: string | null): boolean { if (!signature
 export async function POST(request: Request): Promise<Response> {
   const body = await request.text();
   if (!valid(body, request.headers.get("x-commerce-signature"))) return Response.json({ error: "Invalid signature" }, { status: 401 });
-  const input = schema.safeParse(JSON.parse(body));
+  let payload: unknown;
+  try { payload = JSON.parse(body); } catch { return Response.json({ error: "Malformed JSON" }, { status: 400 }); }
+  const input = schema.safeParse(payload);
   if (!input.success) return Response.json({ error: "Invalid order", details: input.error.flatten() }, { status: 400 });
   const limit = await rateLimit(`commerce:${input.data.organizationSlug}`, 1_000, 60);
   if (!limit.allowed) return Response.json({ error: "Rate limit exceeded" }, { status: 429 });

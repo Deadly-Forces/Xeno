@@ -6,12 +6,13 @@ import { isResponse, requireRole } from "../../../../../lib/rbac";
 
 type StatsRow = { status: MessageStatus | null; messageCount: bigint; conversions: bigint; revenue: { toString(): string } | null };
 
-export async function GET(_: Request, context: { params: { id: string } }): Promise<Response> {
+export async function GET(_: Request, context: { params: Promise<{ id: string }> }): Promise<Response> {
+  const { id } = await context.params;
   let actor; try { actor = await requireRole("ANALYST"); } catch (error) { return isResponse(error) ? error : Response.json({ error: "Forbidden" }, { status: 403 }); }
-  const cacheKey = `campaign:${context.params.id}:stats`;
+  const cacheKey = `campaign:${id}:stats`;
   const cached = await redis.get(cacheKey);
   if (cached) return new Response(cached, { headers: { "content-type": "application/json", "x-cache": "hit" } });
-  const campaign = await db.campaign.findFirst({ where: { id: context.params.id, organizationId: actor.organizationId }, select: { id: true, name: true, status: true, channel: true, messageTemplate: true, createdAt: true, failureReason: true, experiment: { select: { id: true, hypothesis: true, status: true, variants: { select: { id: true, name: true, kind: true } } } } } });
+  const campaign = await db.campaign.findFirst({ where: { id, organizationId: actor.organizationId }, select: { id: true, name: true, status: true, channel: true, messageTemplate: true, createdAt: true, failureReason: true, experiment: { select: { id: true, hypothesis: true, status: true, variants: { select: { id: true, name: true, kind: true } } } } } });
   if (!campaign) return Response.json({ error: "Campaign not found" }, { status: 404 });
   const rows = await db.$queryRaw<StatsRow[]>`
     SELECT cm.status,
@@ -34,7 +35,11 @@ export async function GET(_: Request, context: { params: { id: string } }): Prom
   }
   const decisioning = await db.campaignMessage.aggregate({ where: { campaignId: campaign.id }, _avg: { decisionScore: true, expectedRevenue: true, churnRisk: true }, _sum: { expectedRevenue: true } });
   const costs = await db.deliveryCostEvent.aggregate({ where: { organizationId: actor.organizationId, campaignMessage: { campaignId: campaign.id } }, _sum: { totalCost: true } });
-  const result = { campaign, counts, conversions: rows.reduce((sum, row) => sum + Number(row.conversions), 0), revenue: rows.reduce((sum, row) => sum + Number(row.revenue?.toString() ?? 0), 0), providerCost: Number(costs._sum.totalCost ?? 0), experiment, decisioning: { averageScore: decisioning._avg.decisionScore ?? 0, averageChurnRisk: decisioning._avg.churnRisk ?? 0, expectedRevenue: Number(decisioning._sum.expectedRevenue ?? 0) } };
+  const [receipts, audit] = await Promise.all([
+    db.receiptEvent.findMany({ where: { campaignMessage: { campaignId: campaign.id } }, take: 12, orderBy: { timestamp: "desc" }, select: { id: true, event: true, timestamp: true } }),
+    db.auditLog.findMany({ where: { organizationId: actor.organizationId, entityId: campaign.id }, take: 8, orderBy: { createdAt: "desc" }, select: { id: true, action: true, actorEmail: true, createdAt: true } })
+  ]);
+  const result = { campaign, counts, conversions: rows.reduce((sum, row) => sum + Number(row.conversions), 0), revenue: rows.reduce((sum, row) => sum + Number(row.revenue?.toString() ?? 0), 0), providerCost: Number(costs._sum.totalCost ?? 0), experiment, decisioning: { averageScore: decisioning._avg.decisionScore ?? 0, averageChurnRisk: decisioning._avg.churnRisk ?? 0, expectedRevenue: Number(decisioning._sum.expectedRevenue ?? 0) }, timeline: [...receipts.map((item) => ({ id: item.id, label: item.event.toLowerCase(), detail: "Delivery event", createdAt: item.timestamp })), ...audit.map((item) => ({ id: item.id, label: item.action, detail: item.actorEmail, createdAt: item.createdAt }))].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()).slice(0, 12) };
   await redis.set(cacheKey, JSON.stringify(result), "EX", 5);
   return Response.json(result);
 }

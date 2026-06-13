@@ -6,12 +6,13 @@ function csvCell(value: string | number | null): string {
   return `"${text.replaceAll('"', '""')}"`;
 }
 
-export async function GET(_: Request, context: { params: { id: string } }): Promise<Response> {
+export async function GET(_: Request, context: { params: Promise<{ id: string }> }): Promise<Response> {
+  const { id } = await context.params;
   let actor; try { actor = await requireRole("ANALYST"); } catch (error) { return isResponse(error) ? error : Response.json({ error: "Forbidden" }, { status: 403 }); }
-  const campaign = await db.campaign.findFirst({ where: { id: context.params.id, organizationId: actor.organizationId }, select: { name: true } });
+  const campaign = await db.campaign.findFirst({ where: { id, organizationId: actor.organizationId }, select: { name: true } });
   if (!campaign) return Response.json({ error: "Campaign not found" }, { status: 404 });
   const messages = await db.campaignMessage.findMany({
-    where: { campaignId: context.params.id },
+    where: { campaignId: id },
     orderBy: { id: "asc" },
     select: { status: true, personalizedMessage: true, sentAt: true, deliveredAt: true, openedAt: true, readAt: true, clickedAt: true, failureReason: true, customer: { select: { externalId: true, name: true, email: true, phone: true } } }
   });

@@ -2,11 +2,12 @@ import { CampaignLaunchError, launchCampaign } from "../../../../../lib/campaign
 import { audit } from "../../../../../lib/audit";
 import { isResponse, requireRole } from "../../../../../lib/rbac";
 
-export async function POST(request: Request, context: { params: { id: string } }): Promise<Response> {
+export async function POST(request: Request, context: { params: Promise<{ id: string }> }): Promise<Response> {
+  const { id } = await context.params;
   try {
     const actor = await requireRole("MARKETER");
-    const result = await launchCampaign(context.params.id, actor.organizationId);
-    await audit(actor, "campaign.launch", "Campaign", context.params.id, { enqueued: result.enqueued }, request.headers.get("x-forwarded-for"));
+    const result = await launchCampaign(id, actor.organizationId);
+    await audit(actor, "campaign.launch", "Campaign", id, { enqueued: result.enqueued }, request.headers.get("x-forwarded-for"));
     return Response.json(result, { status: 202 });
   }
   catch (error) {
