@@ -208,10 +208,19 @@ export default function NewCampaignPage(): JSX.Element {
           status: "RUNNING",
           channel,
           messageTemplate: message,
+          failureReason: null,
         },
         counts: { QUEUED: preview?.count ?? selected?.customerCount ?? 0 },
         conversions: 0,
         revenue: 0,
+        providerCost: 0,
+        decisioning: {
+          averageScore: 0,
+          averageChurnRisk: 0,
+          expectedRevenue: 0,
+        },
+        timeline: [],
+        experiment: null,
       });
       const launchResponse = await fetch(
         `/api/campaigns/${campaign.id}/launch`,
@@ -220,6 +229,9 @@ export default function NewCampaignPage(): JSX.Element {
       const launched = (await launchResponse.json()) as { error?: string };
       if (!launchResponse.ok)
         throw new Error(launched.error ?? "Campaign launch failed");
+      await queryClient.invalidateQueries({
+        queryKey: ["campaign", campaign.id],
+      });
       return { id: campaign.id };
     },
     onSuccess: (campaign) => {

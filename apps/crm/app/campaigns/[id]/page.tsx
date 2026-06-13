@@ -123,7 +123,19 @@ export default function CampaignDetailPage(): JSX.Element {
         </button>
       </section>
     );
-  const sent = Object.entries(data.counts)
+  const counts = data.counts ?? {};
+  const conversions = Number.isFinite(data.conversions) ? data.conversions : 0;
+  const revenue = Number.isFinite(data.revenue) ? data.revenue : 0;
+  const providerCost = Number.isFinite(data.providerCost)
+    ? data.providerCost
+    : 0;
+  const decisioning = data.decisioning ?? {
+    averageScore: 0,
+    averageChurnRisk: 0,
+    expectedRevenue: 0,
+  };
+  const timeline = data.timeline ?? [];
+  const sent = Object.entries(counts)
     .filter(([status]) => !["QUEUED", "FAILED"].includes(status))
     .reduce((sum, [, count]) => sum + count, 0);
   const funnel = [
@@ -131,19 +143,19 @@ export default function CampaignDetailPage(): JSX.Element {
     {
       label: "Delivered",
       count: ["DELIVERED", "OPENED", "READ", "CLICKED"].reduce(
-        (sum, status) => sum + (data.counts[status] ?? 0),
+        (sum, status) => sum + (counts[status] ?? 0),
         0,
       ),
     },
     {
       label: "Opened",
       count: ["OPENED", "READ", "CLICKED"].reduce(
-        (sum, status) => sum + (data.counts[status] ?? 0),
+        (sum, status) => sum + (counts[status] ?? 0),
         0,
       ),
     },
-    { label: "Clicked", count: data.counts.CLICKED ?? 0 },
-    { label: "Purchased", count: data.conversions },
+    { label: "Clicked", count: counts.CLICKED ?? 0 },
+    { label: "Purchased", count: conversions },
   ];
   const message = data.campaign.messageTemplate
     .replace("{{name}}", "Maya")
@@ -181,17 +193,17 @@ export default function CampaignDetailPage(): JSX.Element {
         {[
           {
             label: "Messages",
-            value: Object.values(data.counts)
+            value: Object.values(counts)
               .reduce((sum, count) => sum + count, 0)
               .toLocaleString(),
           },
-          { label: "Conversions", value: data.conversions.toLocaleString() },
-          { label: "Revenue", value: `$${data.revenue.toFixed(2)}` },
+          { label: "Conversions", value: conversions.toLocaleString() },
+          { label: "Revenue", value: `$${revenue.toFixed(2)}` },
           {
             label: "Provider cost / ROI",
-            value: `$${data.providerCost.toFixed(2)}`,
-            note: data.providerCost
-              ? `${(((data.revenue - data.providerCost) / data.providerCost) * 100).toFixed(0)}% ROI`
+            value: `$${providerCost.toFixed(2)}`,
+            note: providerCost
+              ? `${(((revenue - providerCost) / providerCost) * 100).toFixed(0)}% ROI`
               : "No billable sends yet",
           },
         ].map((metric) => (
@@ -286,17 +298,17 @@ export default function CampaignDetailPage(): JSX.Element {
         {[
           {
             label: "Average decision score",
-            value: data.decisioning.averageScore.toFixed(1),
+            value: decisioning.averageScore.toFixed(1),
             note: "Estimated conversion propensity",
           },
           {
             label: "Audience churn risk",
-            value: `${Math.round(data.decisioning.averageChurnRisk * 100)}%`,
+            value: `${Math.round(decisioning.averageChurnRisk * 100)}%`,
             note: "Explainable model estimate",
           },
           {
             label: "Expected revenue",
-            value: `$${data.decisioning.expectedRevenue.toFixed(2)}`,
+            value: `$${decisioning.expectedRevenue.toFixed(2)}`,
             note: "Pre-send model estimate",
           },
         ].map((metric) => (
@@ -375,8 +387,8 @@ export default function CampaignDetailPage(): JSX.Element {
         <article className="panel p-5">
           <h2 className="font-semibold">Campaign activity</h2>
           <div className="mt-5 space-y-4">
-            {data.timeline.length ? (
-              data.timeline.map((event) => (
+            {timeline.length ? (
+              timeline.map((event) => (
                 <div
                   className="relative border-l border-line pl-5"
                   key={event.id}

@@ -1,11 +1,8 @@
 import { z } from "zod";
 import { config } from "dotenv";
-import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 
-const localEnv = resolve(process.cwd(), ".env.local");
-const workspaceEnv = resolve(process.cwd(), "../../.env");
-config({ path: existsSync(localEnv) ? localEnv : workspaceEnv });
+config({ path: resolve(process.cwd(), "../../.env"), override: true });
 
 const serverEnvSchema = z.object({
   DATABASE_URL: z.string().url(),

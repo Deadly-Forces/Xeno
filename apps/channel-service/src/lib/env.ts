@@ -1,11 +1,8 @@
 import { z } from "zod";
 import { config } from "dotenv";
-import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 
-const localEnv = resolve(process.cwd(), ".env");
-const workspaceEnv = resolve(process.cwd(), "../../.env");
-config({ path: existsSync(localEnv) ? localEnv : workspaceEnv });
+config({ path: resolve(process.cwd(), "../../.env"), override: true });
 
 export const env = z.object({
   PORT: z.coerce.number().int().positive().default(4000),

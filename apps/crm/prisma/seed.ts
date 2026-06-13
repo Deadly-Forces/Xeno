@@ -2,12 +2,10 @@ import { faker } from "@faker-js/faker";
 import { CampaignStatus, Channel, MessageStatus, PrismaClient } from "@prisma/client";
 import { config } from "dotenv";
 import { resolve } from "node:path";
-import { existsSync } from "node:fs";
 import { hash } from "argon2";
 import { scoreCustomer } from "../lib/decisioning/model";
 
-const localEnv = resolve(process.cwd(), ".env.local");
-config({ path: existsSync(localEnv) ? localEnv : resolve(process.cwd(), "../../.env") });
+config({ path: resolve(process.cwd(), "../../.env"), override: true });
 
 const prisma = new PrismaClient();
 const cities = ["New York", "Austin", "Chicago", "Seattle", "Miami"] as const;

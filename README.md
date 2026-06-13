@@ -45,7 +45,7 @@ The services deploy independently. PostgreSQL is the business source of truth. R
 Prerequisites: Node 22, PostgreSQL, and Redis.
 
 ```bash
-cp .env.example apps/crm/.env.local && cp .env.example apps/channel-service/.env
+cp .env.example .env
 npm install
 npm run prisma:migrate --workspace=@xeno/crm
 npm run seed
@@ -59,6 +59,8 @@ docker compose up --build
 ```
 
 The CRM runs at `http://localhost:3000`; the channel simulator runs at `http://localhost:4000`. The default local `DEMO_PASSWORD` is `password`.
+
+All local services, scripts, tests, Prisma commands, and AI integrations load configuration exclusively from the repository-root `.env` file. Do not create app-level `.env` or `.env.local` files.
 
 The seed creates workspace `xeno` with `admin@example.com`, `marketer@example.com`, and `analyst@example.com`. All three use `DEMO_PASSWORD` and Argon2id hashes.
 

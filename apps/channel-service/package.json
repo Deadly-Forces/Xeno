@@ -4,12 +4,12 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
-    "build": "tsup src/index.ts --format esm --platform node --target node22 --out-dir dist --clean --no-splitting",
-    "start": "node dist/index.js",
+    "dev": "dotenv -e ../../.env -o -- tsx watch src/index.ts",
+    "build": "dotenv -e ../../.env -o -- tsup src/index.ts --format esm --platform node --target node22 --out-dir dist --clean --no-splitting",
+    "start": "dotenv -e ../../.env -o -- node dist/index.js",
     "lint": "tsc --noEmit",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run --passWithNoTests"
+    "test": "dotenv -e ../../.env -o -- vitest run --passWithNoTests"
   },
   "dependencies": {
     "@hono/node-server": "^1.14.4",
@@ -23,6 +23,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.15.31",
+    "dotenv-cli": "^8.0.0",
     "tsx": "^4.20.3",
     "tsup": "^8.5.0",
     "vitest": "^4.1.8"

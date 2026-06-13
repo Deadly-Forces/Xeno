@@ -24,7 +24,7 @@ async function fixture(city: string): Promise<{ campaignId: string; customerId: 
 describe("campaign integration", () => {
   it("enqueues one BullMQ delivery job per segment customer", async () => {
     const fixtureData = await fixture(`Launch-${randomUUID()}`);
-    const response = await launchRoute(new Request("http://localhost/api/campaigns/launch", { method: "POST" }), { params: { id: fixtureData.campaignId } });
+    const response = await launchRoute(new Request("http://localhost/api/campaigns/launch", { method: "POST" }), { params: Promise.resolve({ id: fixtureData.campaignId }) });
     expect(response.status).toBe(202);
     const body = await response.json() as { enqueued: number };
     expect(body.enqueued).toBe(1);
@@ -38,7 +38,7 @@ describe("campaign integration", () => {
       { name: "Control", kind: "CONTROL", messageTemplate: "Control {{name}}" },
       { name: "Treatment", kind: "TREATMENT", messageTemplate: "Treatment {{name}}" }
     ] } } });
-    const response = await launchRoute(new Request("http://localhost/api/campaigns/launch", { method: "POST" }), { params: { id: fixtureData.campaignId } });
+    const response = await launchRoute(new Request("http://localhost/api/campaigns/launch", { method: "POST" }), { params: Promise.resolve({ id: fixtureData.campaignId }) });
     expect(response.status).toBe(202);
     const message = await db.campaignMessage.findUniqueOrThrow({ where: { campaignId_customerId: { campaignId: fixtureData.campaignId, customerId: fixtureData.customerId } }, select: { variantId: true, decisionScore: true, expectedRevenue: true, recommendationReasons: true } });
     expect(message.variantId).not.toBeNull();

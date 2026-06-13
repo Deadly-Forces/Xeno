@@ -9,8 +9,8 @@
     "test": "turbo test",
     "typecheck": "turbo typecheck",
     "seed": "npm run seed --workspace=@xeno/crm",
-    "load-test": "node scripts/load-test.mjs",
-    "e2e": "npx playwright test --config apps/crm/playwright.config.ts"
+    "load-test": "dotenv -e .env -o -- node scripts/load-test.mjs",
+    "e2e": "dotenv -e .env -o -- npx playwright test --config apps/crm/playwright.config.ts"
   },
   "workspaces": ["apps/*", "packages/*"],
   "overrides": {
@@ -20,6 +20,7 @@
     "jsondiffpatch": ">=0.7.2"
   },
   "devDependencies": {
+    "dotenv-cli": "^8.0.0",
     "turbo": "^2.5.4",
     "typescript": "^5.8.3"
   }
