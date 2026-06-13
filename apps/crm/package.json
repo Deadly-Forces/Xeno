@@ -17,11 +17,12 @@
     "prisma:deploy": "dotenv -e ../../.env -- prisma migrate deploy"
   },
   "dependencies": {
-    "@openrouter/ai-sdk-provider": "0.7.5",
+    "@ai-sdk/react": "^3.0.206",
+    "@openrouter/ai-sdk-provider": "^2.9.1",
     "@prisma/client": "^6.10.1",
     "@tanstack/react-query": "^5.80.7",
     "@xeno/shared-types": "*",
-    "ai": "^4.3.16",
+    "ai": "^6.0.204",
     "argon2": "^0.44.0",
     "bullmq": "5.78.0",
     "clsx": "^2.1.1",
@@ -52,6 +53,6 @@
     "tailwindcss": "^3.4.17",
     "tsup": "^8.5.1",
     "tsx": "^4.20.3",
-    "vitest": "^3.2.4"
+    "vitest": "^4.1.8"
   }
 }

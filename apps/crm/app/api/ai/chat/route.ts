@@ -1,4 +1,4 @@
-import { convertToCoreMessages, streamText, type Message } from "ai";
+import { convertToModelMessages, streamText, type UIMessage } from "ai";
 import { crmAssistantPrompt } from "../../../../lib/ai/prompts";
 import { createCrmTools } from "../../../../lib/ai/tools";
 import { crmLanguageModel, isAiConfigured } from "../../../../lib/ai/model";
@@ -9,7 +9,7 @@ import { z } from "zod";
 
 export const maxDuration = 60;
 
-const chatSchema = z.object({ messages: z.array(z.object({ id: z.string().optional(), role: z.enum(["user", "assistant", "system", "data"]), content: z.string().max(20_000) }).passthrough()).min(1).max(50) });
+const chatSchema = z.object({ messages: z.array(z.object({ id: z.string().optional(), role: z.enum(["user", "assistant", "system"]), parts: z.array(z.object({ type: z.string() }).passthrough()).optional() }).passthrough()).min(1).max(50) });
 
 export async function POST(request: Request): Promise<Response> {
   const rejected = rejectCrossSiteRequest(request) ?? rejectOversizedRequest(request, 250_000);
@@ -21,15 +21,14 @@ export async function POST(request: Request): Promise<Response> {
   if (!isAiConfigured()) return Response.json({ error: "OpenRouter is not configured" }, { status: 503 });
   const parsed = chatSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return Response.json({ error: "Invalid chat request" }, { status: 400 });
-  const body = parsed.data as unknown as { messages: Message[] };
-  const latestUserRequest = [...body.messages].reverse().find((message) => message.role === "user")?.content ?? "";
+  const latestUser = [...parsed.data.messages].reverse().find((m) => m.role === "user");
+  const latestUserRequest = latestUser?.parts?.find((p): p is { type: string; text: string } => p.type === "text")?.text ?? "";
   const result = streamText({
     model: crmLanguageModel(),
     system: crmAssistantPrompt,
-    messages: convertToCoreMessages(body.messages),
+    messages: await convertToModelMessages(parsed.data.messages as unknown as UIMessage[]),
     tools: createCrmTools(latestUserRequest, actor.organizationId),
-    maxSteps: 1,
     abortSignal: AbortSignal.timeout(60_000)
   });
-  return result.toDataStreamResponse();
+  return result.toUIMessageStreamResponse();
 }

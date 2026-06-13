@@ -43,7 +43,7 @@ export function createCrmTools(marketerRequest = "", organizationId = "org_xeno_
   return {
   create_segment: tool({
     description: "Create and persist a customer segment. Put the complete segment DSL object in rulesJson as valid JSON.",
-    parameters: z.object({
+    inputSchema: z.object({
       name: z.string().trim().min(2).max(100),
       description: z.string().trim().max(500),
       rulesJson: z.string().min(2).describe("JSON-encoded segment DSL with operator and rules")
@@ -61,7 +61,7 @@ export function createCrmTools(marketerRequest = "", organizationId = "org_xeno_
   }),
   draft_message: tool({
     description: "Draft a concise personalized campaign message that preserves every explicit offer, percentage, product scope, deadline, and call to action from the marketer's request.",
-    parameters: z.object({ segmentSummary: z.string().max(2_000), channel: z.enum(["WHATSAPP", "SMS", "EMAIL", "RCS"]), tone: z.enum(["warm", "direct", "playful", "premium"]) }),
+    inputSchema: z.object({ segmentSummary: z.string().max(2_000), channel: z.enum(["WHATSAPP", "SMS", "EMAIL", "RCS"]), tone: z.enum(["warm", "direct", "playful", "premium"]) }),
     execute: async ({ segmentSummary, channel, tone }) => {
       try {
         const result = await generateText({
@@ -76,7 +76,7 @@ export function createCrmTools(marketerRequest = "", organizationId = "org_xeno_
   }),
   preview_segment: tool({
     description: "Return the current count and a small customer sample for a saved segment.",
-    parameters: z.object({ segmentId: z.string().cuid() }),
+    inputSchema: z.object({ segmentId: z.string().cuid() }),
     execute: async ({ segmentId }) => {
       try {
         const segment = await db.segment.findFirst({ where: { id: segmentId, organizationId }, select: { filterRules: true } });
@@ -92,7 +92,7 @@ export function createCrmTools(marketerRequest = "", organizationId = "org_xeno_
   }),
   recommend_campaign: tool({
     description: "Recommend a channel and campaign angle from segment statistics.",
-    parameters: z.object({ segmentName: z.string().min(1), customerCount: z.number().int().nonnegative(), averageOrderValue: z.number().nonnegative().optional(), daysSinceLastOrder: z.number().nonnegative().optional() }),
+    inputSchema: z.object({ segmentName: z.string().min(1), customerCount: z.number().int().nonnegative(), averageOrderValue: z.number().nonnegative().optional(), daysSinceLastOrder: z.number().nonnegative().optional() }),
     execute: async ({ segmentName, customerCount, averageOrderValue, daysSinceLastOrder }) => {
       const channel = averageOrderValue && averageOrderValue >= 150 ? "WHATSAPP" : daysSinceLastOrder && daysSinceLastOrder >= 60 ? "SMS" : "EMAIL";
       const reasoning = channel === "WHATSAPP" ? "High-value audiences justify a richer conversational channel." : channel === "SMS" ? "A concise mobile reminder suits time-sensitive re-engagement." : "Email provides room for product context without high delivery cost.";
@@ -101,7 +101,7 @@ export function createCrmTools(marketerRequest = "", organizationId = "org_xeno_
   }),
   launch_campaign: tool({
     description: "Create and immediately launch the approved campaign to all customers. Call only after explicit confirmation such as 'send it' or 'send to all customers'. Reuse the exact approved draft as messageTemplate.",
-    parameters: z.object({
+    inputSchema: z.object({
       campaignName: z.string().trim().min(2).max(100),
       audience: z.literal("all_customers"),
       channel: z.enum(["WHATSAPP", "SMS", "EMAIL", "RCS"]),
