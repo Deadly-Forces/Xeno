@@ -1,9 +1,9 @@
 import { createSegmentSchema } from "@xeno/shared-types";
-import { db } from "../../../lib/db";
-import { apiError } from "../../../lib/http";
+import { db } from "../../../lib/core/db";
+import { apiError } from "../../../lib/core/http";
 import { executeSegmentDSL } from "../../../lib/segments/execute";
-import { requireRole, isResponse } from "../../../lib/rbac";
-import { audit } from "../../../lib/audit";
+import { requireRole, isResponse } from "../../../lib/auth/rbac";
+import { audit } from "../../../lib/observability/audit";
 
 export async function GET(): Promise<Response> {
   try { const actor = await requireRole("ANALYST"); return Response.json(await db.segment.findMany({ where: { organizationId: actor.organizationId }, orderBy: { createdAt: "desc" }, select: { id: true, name: true, description: true, customerCount: true, createdAt: true, createdBy: true, filterRules: true } })); }

@@ -2,8 +2,8 @@ import { Queue, Worker, type JobsOptions } from "bullmq";
 import IORedis from "ioredis";
 import { db } from "./db";
 import { env } from "./env";
-import { createOperationalAlert } from "./alerts";
-import { stableBucket } from "./decisioning/model";
+import { createOperationalAlert } from "../observability/alerts";
+import { stableBucket } from "../decisioning/model";
 
 export const redis = new IORedis(env.REDIS_URL, { maxRetriesPerRequest: null });
 type CampaignJob = { kind: "deliver"; campaignMessageId: string } | { kind: "finalize"; campaignId: string };

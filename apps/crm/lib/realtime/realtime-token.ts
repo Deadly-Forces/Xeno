@@ -1,5 +1,5 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
-import { env } from "./env";
+import { env } from "../core/env";
 
 export function createRealtimeToken(input: { organizationId: string; userId: string; campaignId: string; expiresAt: number }): string {
   const payload = Buffer.from(JSON.stringify(input)).toString("base64url");

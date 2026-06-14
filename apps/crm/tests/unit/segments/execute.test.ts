@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { executeSegmentDSL, SegmentDslError } from "./execute";
+import { executeSegmentDSL, SegmentDslError } from "../../../lib/segments/execute";
 
 describe("executeSegmentDSL", () => {
   it("returns all customers for empty rules", () => expect(executeSegmentDSL({ operator: "AND", rules: [] })).toEqual({}));

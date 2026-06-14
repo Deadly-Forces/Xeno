@@ -1,7 +1,7 @@
 import { z } from "zod";
-import { db } from "../../../../lib/db";
-import { audit } from "../../../../lib/audit";
-import { isResponse, requireRole } from "../../../../lib/rbac";
+import { db } from "../../../../lib/core/db";
+import { audit } from "../../../../lib/observability/audit";
+import { isResponse, requireRole } from "../../../../lib/auth/rbac";
 
 export async function GET(): Promise<Response> {
   try { const actor = await requireRole("ADMIN"); return Response.json(await db.operationalAlert.findMany({ where: { organizationId: actor.organizationId }, orderBy: { createdAt: "desc" }, take: 100 })); }

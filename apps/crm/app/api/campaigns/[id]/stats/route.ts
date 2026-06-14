@@ -1,8 +1,8 @@
-import { db } from "../../../../../lib/db";
-import { redis } from "../../../../../lib/queue";
+import { db } from "../../../../../lib/core/db";
+import { redis } from "../../../../../lib/core/queue";
 import type { MessageStatus } from "@prisma/client";
 import { experimentResult, type VariantMetric } from "../../../../../lib/experiments/stats";
-import { isResponse, requireRole } from "../../../../../lib/rbac";
+import { isResponse, requireRole } from "../../../../../lib/auth/rbac";
 
 type StatsRow = { status: MessageStatus | null; messageCount: bigint; conversions: bigint; revenue: { toString(): string } | null };
 

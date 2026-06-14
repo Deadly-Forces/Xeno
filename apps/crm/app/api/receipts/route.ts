@@ -1,9 +1,9 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { receiptSchema } from "@xeno/shared-types";
-import { db } from "../../../lib/db";
-import { env } from "../../../lib/env";
+import { db } from "../../../lib/core/db";
+import { env } from "../../../lib/core/env";
 import { receiptBatcher } from "../../../lib/receipts/batcher";
-import { rateLimit } from "../../../lib/rate-limit";
+import { rateLimit } from "../../../lib/security/rate-limit";
 
 function validSignature(body: string, signature: string | null): boolean {
   if (!signature) return false;

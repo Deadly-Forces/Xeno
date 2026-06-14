@@ -1,8 +1,8 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { z } from "zod";
-import { db } from "../../../../lib/db";
-import { env } from "../../../../lib/env";
-import { rateLimit } from "../../../../lib/rate-limit";
+import { db } from "../../../../lib/core/db";
+import { env } from "../../../../lib/core/env";
+import { rateLimit } from "../../../../lib/security/rate-limit";
 
 const schema = z.object({ organizationSlug: z.string().min(1), externalOrderId: z.string().min(1), customerExternalId: z.string().min(1), totalAmount: z.number().nonnegative(), status: z.string().default("PAID"), createdAt: z.string().datetime(), items: z.array(z.object({ product: z.string(), quantity: z.number().int().positive(), unitPrice: z.number().nonnegative() })).min(1) });
 function valid(body: string, signature: string | null): boolean { if (!signature) return false; const expected = createHmac("sha256", env.COMMERCE_HMAC_SECRET).update(body).digest(); const received = Buffer.from(signature, "hex"); return expected.length === received.length && timingSafeEqual(expected, received); }

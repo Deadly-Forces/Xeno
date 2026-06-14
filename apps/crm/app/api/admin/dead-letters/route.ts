@@ -1,7 +1,7 @@
 import { z } from "zod";
-import { audit } from "../../../../lib/audit";
-import { campaignJobOptions, campaignQueue, deadLetterQueue } from "../../../../lib/queue";
-import { isResponse, requireRole } from "../../../../lib/rbac";
+import { audit } from "../../../../lib/observability/audit";
+import { campaignJobOptions, campaignQueue, deadLetterQueue } from "../../../../lib/core/queue";
+import { isResponse, requireRole } from "../../../../lib/auth/rbac";
 
 export async function GET(): Promise<Response> {
   try {
@@ -11,8 +11,8 @@ export async function GET(): Promise<Response> {
     for (const job of jobs) {
       const data = job.data.data;
       const campaign = data.kind === "deliver"
-        ? await import("../../../../lib/db").then(({ db }) => db.campaignMessage.findUnique({ where: { id: data.campaignMessageId }, select: { campaign: { select: { organizationId: true } } } })).then((message) => message?.campaign)
-        : await import("../../../../lib/db").then(({ db }) => db.campaign.findUnique({ where: { id: data.campaignId }, select: { organizationId: true } }));
+        ? await import("../../../../lib/core/db").then(({ db }) => db.campaignMessage.findUnique({ where: { id: data.campaignMessageId }, select: { campaign: { select: { organizationId: true } } } })).then((message) => message?.campaign)
+        : await import("../../../../lib/core/db").then(({ db }) => db.campaign.findUnique({ where: { id: data.campaignId }, select: { organizationId: true } }));
       if (campaign?.organizationId === actor.organizationId) visible.push({ id: job.id, name: job.name, data: job.data, timestamp: job.timestamp, failedReason: job.failedReason });
     }
     return Response.json(visible);
@@ -27,8 +27,8 @@ export async function POST(request: Request): Promise<Response> {
     if (!deadLetter) return Response.json({ error: "Dead-letter job not found" }, { status: 404 });
     const data = deadLetter.data.data;
     const owns = data.kind === "deliver"
-      ? await import("../../../../lib/db").then(({ db }) => db.campaignMessage.count({ where: { id: data.campaignMessageId, campaign: { organizationId: actor.organizationId } } }))
-      : await import("../../../../lib/db").then(({ db }) => db.campaign.count({ where: { id: data.campaignId, organizationId: actor.organizationId } }));
+      ? await import("../../../../lib/core/db").then(({ db }) => db.campaignMessage.count({ where: { id: data.campaignMessageId, campaign: { organizationId: actor.organizationId } } }))
+      : await import("../../../../lib/core/db").then(({ db }) => db.campaign.count({ where: { id: data.campaignId, organizationId: actor.organizationId } }));
     if (!owns) return Response.json({ error: "Dead-letter job not found" }, { status: 404 });
     const jobId = data.kind === "deliver" ? data.campaignMessageId : `finalize-${data.campaignId}`;
     await campaignQueue.add(data.kind, data, { ...campaignJobOptions, jobId: `${jobId}-retry-${Date.now()}` });

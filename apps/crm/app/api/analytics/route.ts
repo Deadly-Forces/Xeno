@@ -1,5 +1,5 @@
-import { db } from "../../../lib/db";
-import { isResponse, requireRole } from "../../../lib/rbac";
+import { db } from "../../../lib/core/db";
+import { isResponse, requireRole } from "../../../lib/auth/rbac";
 
 type ChannelRow = { channel: string; messages: bigint; delivered: bigint; opened: bigint; clicked: bigint };
 type SegmentRow = { name: string; customers: number; messages: bigint; clicked: bigint };

@@ -1,8 +1,8 @@
 import { z } from "zod";
-import { db } from "../../../../../lib/db";
-import { audit } from "../../../../../lib/audit";
-import { apiError } from "../../../../../lib/http";
-import { isResponse, requireRole } from "../../../../../lib/rbac";
+import { db } from "../../../../../lib/core/db";
+import { audit } from "../../../../../lib/observability/audit";
+import { apiError } from "../../../../../lib/core/http";
+import { isResponse, requireRole } from "../../../../../lib/auth/rbac";
 import { scoreCustomer } from "../../../../../lib/decisioning/model";
 import { executeSegmentDSL } from "../../../../../lib/segments/execute";
 

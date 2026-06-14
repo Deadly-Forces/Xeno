@@ -1,5 +1,5 @@
-import { db } from "../db";
-import { campaignJobOptions, campaignQueue, redis } from "../queue";
+import { db } from "../core/db";
+import { campaignJobOptions, campaignQueue, redis } from "../core/queue";
 import { executeSegmentDSL } from "../segments/execute";
 import { scoreCustomer, stableBucket } from "../decisioning/model";
 import { activeModel, extractFeatures, predictArtifact } from "../ml/pipeline";

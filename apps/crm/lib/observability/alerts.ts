@@ -1,6 +1,6 @@
 import type { Prisma } from "@prisma/client";
-import { db } from "./db";
-import { env } from "./env";
+import { db } from "../core/db";
+import { env } from "../core/env";
 
 export async function createOperationalAlert(organizationId: string, severity: "info" | "warning" | "critical", source: string, title: string, details?: Prisma.InputJsonValue): Promise<void> {
   const alert = await db.operationalAlert.create({ data: { organizationId, severity, source, title, ...(details !== undefined ? { details } : {}) } });

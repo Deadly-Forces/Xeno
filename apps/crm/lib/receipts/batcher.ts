@@ -1,6 +1,6 @@
 import { MessageStatus, type Prisma } from "@prisma/client";
-import { db } from "../db";
-import { redis } from "../queue";
+import { db } from "../core/db";
+import { redis } from "../core/queue";
 
 type ReceiptBatchEntry = {
   campaignMessageId: string;

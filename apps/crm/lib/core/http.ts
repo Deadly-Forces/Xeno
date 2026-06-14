@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { ZodError } from "zod";
-import { SegmentDslError } from "./segments/execute";
+import { SegmentDslError } from "../segments/execute";
 
 export function apiError(error: unknown): NextResponse {
   if (error instanceof ZodError) return NextResponse.json({ error: "Validation failed", details: error.flatten() }, { status: 400 });

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { evaluateRanking, scoreCustomer, stableBucket } from "./model";
+import { evaluateRanking, scoreCustomer, stableBucket } from "../../../lib/decisioning/model";
 
 describe("decision model", () => {
   it("scores a recent repeat customer above an inactive one", () => {

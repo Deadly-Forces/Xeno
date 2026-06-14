@@ -1,7 +1,7 @@
 import type { Channel, Prisma } from "@prisma/client";
-import { db } from "../db";
+import { db } from "../core/db";
 import { createHash } from "node:crypto";
-import { createOperationalAlert } from "../alerts";
+import { createOperationalAlert } from "../observability/alerts";
 
 export const FEATURE_NAMES = ["bias", "recency", "frequency", "monetary", "email", "sms", "whatsapp", "rcs"] as const;
 export type FeatureVector = Record<(typeof FEATURE_NAMES)[number], number>;

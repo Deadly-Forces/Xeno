@@ -1,6 +1,6 @@
 import type { Channel } from "@prisma/client";
-import { db } from "../../../lib/db";
-import { isResponse, requireRole } from "../../../lib/rbac";
+import { db } from "../../../lib/core/db";
+import { isResponse, requireRole } from "../../../lib/auth/rbac";
 
 const channelValues = new Set<Channel>(["EMAIL", "SMS", "WHATSAPP", "RCS"]);
 const dayKey = (date: Date): string => date.toISOString().slice(0, 10);

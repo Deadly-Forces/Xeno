@@ -1,4 +1,4 @@
-import { db } from "../lib/db";
+import { db } from "../lib/core/db";
 import { monitorDrift, trainOrganizationModel } from "../lib/ml/pipeline";
 
 const organizationId = process.argv[2] ?? "org_xeno_default";

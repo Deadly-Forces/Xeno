@@ -1,7 +1,7 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { z } from "zod";
-import { db } from "../../../lib/db";
-import { env } from "../../../lib/env";
+import { db } from "../../../lib/core/db";
+import { env } from "../../../lib/core/env";
 
 const schema = z.object({ organizationSlug: z.string(), customerExternalId: z.string(), status: z.enum(["OPTED_IN", "OPTED_OUT"]), reason: z.string().max(300).optional() });
 export async function POST(request: Request): Promise<Response> {

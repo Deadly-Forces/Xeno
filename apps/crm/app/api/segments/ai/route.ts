@@ -4,9 +4,9 @@ import { z } from "zod";
 import { crmLanguageModel, isAiConfigured } from "../../../../lib/ai/model";
 import { segmentGenerationPrompt } from "../../../../lib/ai/prompts";
 import { extractJsonObject, normalizeSegmentDslCandidate } from "../../../../lib/ai/segment-normalizer";
-import { apiError } from "../../../../lib/http";
-import { rateLimit } from "../../../../lib/rate-limit";
-import { isResponse, requireRole } from "../../../../lib/rbac";
+import { apiError } from "../../../../lib/core/http";
+import { rateLimit } from "../../../../lib/security/rate-limit";
+import { isResponse, requireRole } from "../../../../lib/auth/rbac";
 
 const requestSchema = z.object({ description: z.string().trim().min(3).max(2_000) });
 const responseSchema = z.object({ rules: segmentDslSchema, explanation: z.string().min(1).max(1_000) });

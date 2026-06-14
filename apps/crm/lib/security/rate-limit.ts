@@ -1,4 +1,4 @@
-import { redis } from "./queue";
+import { redis } from "../core/queue";
 
 export async function rateLimit(key: string, limit: number, windowSeconds: number): Promise<{ allowed: boolean; remaining: number }> {
   const redisKey = `rate-limit:${key}`;

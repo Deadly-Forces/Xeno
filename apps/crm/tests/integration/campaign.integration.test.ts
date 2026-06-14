@@ -1,10 +1,10 @@
 import { createHmac, randomUUID } from "node:crypto";
 import { afterAll, describe, expect, it } from "vitest";
-import { db } from "../lib/db";
-import { campaignQueue, redis } from "../lib/queue";
-import { env } from "../lib/env";
-import { POST as launchRoute } from "../app/api/campaigns/[id]/launch/route";
-import { POST as receiptRoute } from "../app/api/receipts/route";
+import { db } from "../../lib/core/db";
+import { campaignQueue, redis } from "../../lib/core/queue";
+import { env } from "../../lib/core/env";
+import { POST as launchRoute } from "../../app/api/campaigns/[id]/launch/route";
+import { POST as receiptRoute } from "../../app/api/receipts/route";
 
 const createdCampaigns: string[] = [];
 const createdSegments: string[] = [];

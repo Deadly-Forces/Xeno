@@ -1,9 +1,9 @@
 import { z } from "zod";
-import { audit } from "../../../../../lib/audit";
-import { db } from "../../../../../lib/db";
-import { apiError } from "../../../../../lib/http";
-import { campaignJobOptions, campaignQueue, redis } from "../../../../../lib/queue";
-import { isResponse, requireRole } from "../../../../../lib/rbac";
+import { audit } from "../../../../../lib/observability/audit";
+import { db } from "../../../../../lib/core/db";
+import { apiError } from "../../../../../lib/core/http";
+import { campaignJobOptions, campaignQueue, redis } from "../../../../../lib/core/queue";
+import { isResponse, requireRole } from "../../../../../lib/auth/rbac";
 
 const schema = z.object({ action: z.enum(["pause", "resume"]) });
 

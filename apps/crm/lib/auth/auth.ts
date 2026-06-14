@@ -2,8 +2,8 @@ import { verify } from "argon2";
 import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { z } from "zod";
-import { env } from "./env";
-import { db } from "./db";
+import { env } from "../core/env";
+import { db } from "../core/db";
 
 export const authOptions: NextAuthOptions = {
   secret: env.NEXTAUTH_SECRET,

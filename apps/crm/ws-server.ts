@@ -1,7 +1,7 @@
 import { WebSocketServer } from "ws";
 import IORedis from "ioredis";
-import { env } from "./lib/env";
-import { verifyRealtimeToken } from "./lib/realtime-token";
+import { env } from "./lib/core/env";
+import { verifyRealtimeToken } from "./lib/realtime/realtime-token";
 
 const port = Number(process.env.WS_PORT ?? 3001);
 const clients = new Map<string, Set<import("ws").WebSocket>>();

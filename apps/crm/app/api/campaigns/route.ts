@@ -1,9 +1,9 @@
 import { channelSchema } from "@xeno/shared-types";
 import { z } from "zod";
-import { db } from "../../../lib/db";
-import { apiError } from "../../../lib/http";
-import { requireRole, isResponse } from "../../../lib/rbac";
-import { audit } from "../../../lib/audit";
+import { db } from "../../../lib/core/db";
+import { apiError } from "../../../lib/core/http";
+import { requireRole, isResponse } from "../../../lib/auth/rbac";
+import { audit } from "../../../lib/observability/audit";
 
 const schema = z.object({
   name: z.string().trim().min(2).max(100),

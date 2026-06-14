@@ -1,7 +1,7 @@
 import { generateText, tool } from "ai";
 import { z } from "zod";
 import { segmentDslSchema } from "@xeno/shared-types";
-import { db } from "../db";
+import { db } from "../core/db";
 import { executeSegmentDSL } from "../segments/execute";
 import { crmLanguageModel } from "./model";
 import { launchCampaign } from "../campaigns/launch";

@@ -1,6 +1,6 @@
-import { db } from "../../../lib/db";
+import { db } from "../../../lib/core/db";
 import { evaluateRanking, rankCustomers, DECISION_MODEL_VERSION } from "../../../lib/decisioning/model";
-import { isResponse, requireRole } from "../../../lib/rbac";
+import { isResponse, requireRole } from "../../../lib/auth/rbac";
 import { executeSegmentDSL } from "../../../lib/segments/execute";
 
 export async function GET(request: Request): Promise<Response> {

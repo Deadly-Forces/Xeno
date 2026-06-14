@@ -1,5 +1,5 @@
-import { db } from "../../../../../lib/db";
-import { isResponse, requireRole } from "../../../../../lib/rbac";
+import { db } from "../../../../../lib/core/db";
+import { isResponse, requireRole } from "../../../../../lib/auth/rbac";
 
 function csvCell(value: string | number | null): string {
   const text = value === null ? "" : String(value);

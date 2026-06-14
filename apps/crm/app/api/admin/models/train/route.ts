@@ -1,6 +1,6 @@
-import { audit } from "../../../../../lib/audit";
+import { audit } from "../../../../../lib/observability/audit";
 import { monitorDrift, trainOrganizationModel } from "../../../../../lib/ml/pipeline";
-import { isResponse, requireRole } from "../../../../../lib/rbac";
+import { isResponse, requireRole } from "../../../../../lib/auth/rbac";
 
 export async function POST(): Promise<Response> {
   try {

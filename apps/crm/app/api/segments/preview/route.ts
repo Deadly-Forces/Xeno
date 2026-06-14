@@ -1,10 +1,10 @@
 import { segmentDslSchema } from "@xeno/shared-types";
-import { db } from "../../../../lib/db";
-import { apiError } from "../../../../lib/http";
+import { db } from "../../../../lib/core/db";
+import { apiError } from "../../../../lib/core/http";
 import { executeSegmentDSL } from "../../../../lib/segments/execute";
-import { redis } from "../../../../lib/queue";
+import { redis } from "../../../../lib/core/queue";
 import { createHash } from "node:crypto";
-import { isResponse, requireRole } from "../../../../lib/rbac";
+import { isResponse, requireRole } from "../../../../lib/auth/rbac";
 
 export async function POST(request: Request): Promise<Response> {
   try {

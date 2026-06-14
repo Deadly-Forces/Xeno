@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { segmentDslSchema } from "@xeno/shared-types";
-import { buildDraftPrompt } from "./tools";
-import { extractJsonObject, normalizeSegmentDslCandidate } from "./segment-normalizer";
+import { buildDraftPrompt } from "../../../lib/ai/tools";
+import { extractJsonObject, normalizeSegmentDslCandidate } from "../../../lib/ai/segment-normalizer";
 
 describe("normalizeSegmentDslCandidate", () => {
   it("normalizes common model aliases before strict validation", () => {

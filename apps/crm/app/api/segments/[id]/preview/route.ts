@@ -1,7 +1,7 @@
-import { db } from "../../../../../lib/db";
+import { db } from "../../../../../lib/core/db";
 import { executeSegmentDSL } from "../../../../../lib/segments/execute";
-import { redis } from "../../../../../lib/queue";
-import { isResponse, requireRole } from "../../../../../lib/rbac";
+import { redis } from "../../../../../lib/core/queue";
+import { isResponse, requireRole } from "../../../../../lib/auth/rbac";
 
 export async function GET(_: Request, context: { params: Promise<{ id: string }> }): Promise<Response> {
   const { id } = await context.params;

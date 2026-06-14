@@ -1,9 +1,9 @@
 import { parse } from "csv-parse/sync";
 import { z } from "zod";
-import { db } from "../../../../lib/db";
-import { apiError } from "../../../../lib/http";
-import { audit } from "../../../../lib/audit";
-import { isResponse, requireRole } from "../../../../lib/rbac";
+import { db } from "../../../../lib/core/db";
+import { apiError } from "../../../../lib/core/http";
+import { audit } from "../../../../lib/observability/audit";
+import { isResponse, requireRole } from "../../../../lib/auth/rbac";
 
 const importedOrder = z.object({ items: z.array(z.object({ product: z.string().trim().min(1), quantity: z.coerce.number().int().positive(), unitPrice: z.coerce.number().nonnegative() })), totalAmount: z.coerce.number().nonnegative(), status: z.string().trim().min(1), createdAt: z.coerce.date() });
 const importedCustomer = z.object({ externalId: z.string().trim().min(1).max(100), name: z.string().trim().min(1).max(200), email: z.string().email().nullable().optional(), phone: z.string().trim().max(30).nullable().optional(), tags: z.array(z.string().trim().max(50)).default([]), city: z.string().trim().min(1).max(100), ageGroup: z.string().trim().min(1).max(30), gender: z.string().trim().min(1).max(30), channelPreference: z.enum(["WHATSAPP", "SMS", "EMAIL", "RCS"]), orders: z.array(importedOrder).default([]) });

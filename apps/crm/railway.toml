@@ -1,3 +1,5 @@
+# Railway deployment config — CRM service (Next.js)
+# Duplicate of root railway.toml for reference. Railway uses the root file.
 [build]
 builder = "DOCKERFILE"
 dockerfilePath = "apps/crm/Dockerfile"

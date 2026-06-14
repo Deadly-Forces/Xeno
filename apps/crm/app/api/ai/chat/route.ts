@@ -2,9 +2,9 @@ import { convertToModelMessages, streamText, type UIMessage } from "ai";
 import { crmAssistantPrompt } from "../../../../lib/ai/prompts";
 import { createCrmTools } from "../../../../lib/ai/tools";
 import { crmLanguageModel, isAiConfigured } from "../../../../lib/ai/model";
-import { rateLimit } from "../../../../lib/rate-limit";
-import { isResponse, requireRole } from "../../../../lib/rbac";
-import { rejectCrossSiteRequest, rejectOversizedRequest } from "../../../../lib/request-security";
+import { rateLimit } from "../../../../lib/security/rate-limit";
+import { isResponse, requireRole } from "../../../../lib/auth/rbac";
+import { rejectCrossSiteRequest, rejectOversizedRequest } from "../../../../lib/security/request-security";
 import { z } from "zod";
 
 export const maxDuration = 60;

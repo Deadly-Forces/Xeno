@@ -1,6 +1,6 @@
 import { CampaignLaunchError, launchCampaign } from "../../../../../lib/campaigns/launch";
-import { audit } from "../../../../../lib/audit";
-import { isResponse, requireRole } from "../../../../../lib/rbac";
+import { audit } from "../../../../../lib/observability/audit";
+import { isResponse, requireRole } from "../../../../../lib/auth/rbac";
 
 export async function POST(request: Request, context: { params: Promise<{ id: string }> }): Promise<Response> {
   const { id } = await context.params;

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { extractFeatures, predictArtifact, trainLogisticRegression } from "./pipeline";
+import { extractFeatures, predictArtifact, trainLogisticRegression } from "../../../lib/ml/pipeline";
 
 describe("ML pipeline", () => {
   it("trains a finite logistic model and returns calibrated probabilities", () => {

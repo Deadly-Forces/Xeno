@@ -1,6 +1,6 @@
-import { db } from "../../../lib/db";
+import { db } from "../../../lib/core/db";
 import { executeSegmentDSL } from "../../../lib/segments/execute";
-import { isResponse, requireRole } from "../../../lib/rbac";
+import { isResponse, requireRole } from "../../../lib/auth/rbac";
 
 export async function GET(request: Request): Promise<Response> {
   let actor; try { actor = await requireRole("ANALYST"); } catch (error) { return isResponse(error) ? error : Response.json({ error: "Forbidden" }, { status: 403 }); }

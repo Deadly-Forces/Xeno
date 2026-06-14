@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { rejectCrossSiteRequest, rejectOversizedRequest } from "./request-security";
+import { rejectCrossSiteRequest, rejectOversizedRequest } from "../../../lib/security/request-security";
 
 describe("request security", () => {
   it("rejects cross-site mutations", () => {
