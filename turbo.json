@@ -1,5 +1,19 @@
 {
   "$schema": "https://turbo.build/schema.json",
+  "globalEnv": [
+    "DATABASE_URL",
+    "REDIS_URL",
+    "CHANNEL_SERVICE_URL",
+    "CRM_RECEIPT_URL",
+    "RECEIPT_HMAC_SECRET",
+    "COMMERCE_HMAC_SECRET",
+    "NEXTAUTH_SECRET",
+    "NEXTAUTH_URL",
+    "MARKETER_EMAIL",
+    "MARKETER_PASSWORD_SHA256",
+    "DEMO_PASSWORD",
+    "E2E_PASSWORD"
+  ],
   "tasks": {
     "build": { "dependsOn": ["^build"], "outputs": [".next/**", "dist/**"] },
     "dev": { "cache": false, "persistent": true },
