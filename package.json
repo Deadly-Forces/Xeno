@@ -8,7 +8,7 @@
     "lint": "turbo lint",
     "test": "turbo test",
     "typecheck": "turbo typecheck",
-    "seed": "npm run seed --workspace=@xeno/crm",
+    "seed": "npm run prisma:generate --workspace=@xeno/crm && npm run seed --workspace=@xeno/crm",
     "load-test": "dotenv -e .env -o -- node scripts/load-test.mjs",
     "e2e": "dotenv -e .env -o -- npx playwright test --config apps/crm/playwright.config.ts"
   },
