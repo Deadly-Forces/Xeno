@@ -9,9 +9,9 @@ const schema = z.object({ action: z.enum(["pause", "resume"]) });
 
 export async function POST(request: Request, context: { params: Promise<{ id: string }> }): Promise<Response> {
   try {
-    const actor = await requireRole("MARKETER");
     const { id } = await context.params;
     const { action } = schema.parse(await request.json());
+    const actor = await requireRole(action === "resume" ? "ADMIN" : "MARKETER");
     const campaign = await db.campaign.findFirst({ where: { id, organizationId: actor.organizationId }, select: { id: true } });
     if (!campaign) return Response.json({ error: "Campaign not found" }, { status: 404 });
     await db.campaign.update({ where: { id }, data: { guardrailPaused: action === "pause", guardrailReason: action === "pause" ? "Paused by operator" : null } });

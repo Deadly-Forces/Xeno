@@ -45,7 +45,9 @@ export async function POST(request: Request): Promise<Response> {
     const contacted = Math.round(eligible.length * (1 - holdoutPercentage / 100));
     const estimatedCost = contacted * unitCost;
     const expectedRevenue = eligible.slice(0, contacted).reduce((sum, item) => sum + item.decision.expectedRevenue, 0);
-    const segment = await db.segment.create({ data: { organizationId: actor.organizationId, name: `Autopilot: ${inactiveDays}-day high-value win-back`, description: `Customers above $${valueFloor} lifetime value with no order in ${inactiveDays} days.`, filterRules: rules, customerCount: matched.length, createdBy: "ai" }, select: { id: true, name: true, description: true } });
+    const segmentName = `Autopilot: ${inactiveDays}-day high-value win-back`;
+    const existingSegment = await db.segment.findFirst({ where: { organizationId: actor.organizationId, name: segmentName, createdBy: "ai" }, select: { id: true } });
+    const segment = existingSegment ? await db.segment.update({ where: { id: existingSegment.id }, data: { description: `Customers above $${valueFloor} lifetime value with no order in ${inactiveDays} days.`, filterRules: rules, customerCount: matched.length }, select: { id: true, name: true, description: true } }) : await db.segment.create({ data: { organizationId: actor.organizationId, name: segmentName, description: `Customers above $${valueFloor} lifetime value with no order in ${inactiveDays} days.`, filterRules: rules, customerCount: matched.length, createdBy: "ai" }, select: { id: true, name: true, description: true } });
     const message = channel === "EMAIL" ? "Hi {{name}}, it has been a while. Come back to discover what is new for you, including picks inspired by {{lastProduct}}." : "Hi {{name}}, we miss you. Return to see new picks inspired by {{lastProduct}}.";
     const treatmentMessage = "Hi {{name}}, your next favorite may already be waiting. Revisit picks inspired by {{lastProduct}} today.";
     const plan = {

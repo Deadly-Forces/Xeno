@@ -9,35 +9,36 @@ async function signIn(page: import("@playwright/test").Page): Promise<void> {
   await expect(page).toHaveURL("/", { timeout: 15_000 });
 }
 
-test("creates a segment with AI and launches a campaign", async ({ page }) => {
+test("builds, approves, and launches an autopilot campaign", async ({ page }) => {
   await signIn(page);
-  await page.goto("/segments");
-  await page.getByPlaceholder("Ask for a segment or message...").fill("Create a segment named E2E High Spenders for customers who spent more than $500.");
-  await page.getByRole("button", { name: "Send" }).click();
-  await expect(page.getByText("Segment created", { exact: false })).toBeVisible({ timeout: 30_000 });
-  await expect(page.getByText("E2E High Spenders", { exact: true }).last()).toBeVisible();
   await page.goto("/campaigns/new");
-  await page.getByText("E2E High Spenders", { exact: true }).last().click();
-  await expect(page.getByText("Sample customers")).toBeVisible();
-  await page.getByRole("button", { name: /Continue/ }).click();
-  await page.getByRole("button", { name: /Continue/ }).click();
-  await page.getByRole("button", { name: /Continue/ }).click();
-  await page.getByRole("button", { name: "Launch now" }).last().click();
+  await page.getByLabel("Campaign objective and constraints").fill("Win back high-value shoppers who have not ordered in 60 days without exceeding $100.");
+  await page.getByRole("button", { name: "Build plan" }).click();
+  await expect(page.getByText("Eligible reach", { exact: true })).toBeVisible();
+  await expect(page.getByText("Within budget", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Decision trace" }).click();
+  await expect(page.getByText("Intent parsed", { exact: true })).toBeVisible();
+  await expect(page.getByText("Policy engine", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Exclusions" }).click();
+  await expect(page.getByText("Excluded customers and reasons", { exact: true })).toBeVisible();
+  await page.getByLabel("Approve campaign plan").check();
+  await page.getByRole("button", { name: /Approve and launch/ }).click();
   await expect(page).toHaveURL(/\/campaigns\/(?!new$)[^/]+$/, { timeout: 15_000 });
   await expect(page.getByText("Messages", { exact: true }).first()).toBeVisible({ timeout: 15_000 });
-  await expect.poll(async () => Number(await page.locator("article").filter({ hasText: "Messages" }).locator("strong").textContent()), { timeout: 30_000 }).toBeGreaterThan(0);
+  await expect(page.getByText("AI post-campaign analyst", { exact: true })).toBeVisible();
+  await expect(page.getByText("No-send holdout", { exact: true })).toBeVisible();
+  await expect(page.getByText("Adaptive guardrails", { exact: true })).toBeVisible();
 });
 
-test("preserves explicit promotional details in an AI message draft", async ({ page }) => {
+test("autopilot preflight extracts marketer constraints", async ({ page }) => {
   await signIn(page);
-  await page.goto("/campaigns/new");
-  await page.getByPlaceholder("Ask for a segment or message...").fill("Create a WhatsApp message for all customers saying there is 30% off all products if they shop within 30 minutes.");
-  await page.getByRole("button", { name: "Send" }).click();
-
-  const draft = page.getByTestId("message-draft-card").locator("p");
-  await expect(draft).toContainText("30%", { timeout: 60_000 });
-  await expect(draft).toContainText(/all products|everything in the store/i);
-  await expect(draft).toContainText(/30 minutes/i);
+  const response = await page.request.post("/api/campaigns/autopilot/plan", { data: { intent: "Win back high-value shoppers who have not ordered in 90 days without exceeding $75." } });
+  expect(response.ok()).toBe(true);
+  const body = await response.json() as { estimates: { budget: number; cost: number }; trace: Array<{ detail: string }>; segment: { description: string } };
+  expect(body.estimates.budget).toBe(75);
+  expect(body.estimates.cost).toBeLessThanOrEqual(75);
+  expect(body.segment.description).toContain("90 days");
+  expect(body.trace[0]?.detail).toContain("$75");
 });
 
 test("generates validated segment DSL through the dedicated AI endpoint", async ({ page }) => {
