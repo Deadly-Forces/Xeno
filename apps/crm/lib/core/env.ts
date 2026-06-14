@@ -1,8 +1,17 @@
 import { z } from "zod";
 import { config } from "dotenv";
 import { resolve } from "node:path";
+import { existsSync } from "node:fs";
 
-config({ path: resolve(process.cwd(), "../../.env"), override: true });
+// Try to find the .env file in common locations
+const rootEnv = resolve(process.cwd(), "../../.env");
+const localEnv = resolve(process.cwd(), ".env");
+const currentEnv = resolve(process.cwd(), "../../../.env");
+
+if (existsSync(rootEnv)) config({ path: rootEnv, override: true });
+else if (existsSync(localEnv)) config({ path: localEnv, override: true });
+else if (existsSync(currentEnv)) config({ path: currentEnv, override: true });
+else config(); // Fallback to default behavior
 
 const serverEnvSchema = z.object({
   DATABASE_URL: z.string().url(),

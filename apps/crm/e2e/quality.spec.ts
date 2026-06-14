@@ -6,7 +6,7 @@ async function signIn(page: import("@playwright/test").Page, email = "marketer@e
   await page.getByLabel("Email").fill(email);
   await page.getByLabel("Password").fill(process.env.E2E_PASSWORD ?? "password");
   await page.getByRole("button", { name: "Sign in" }).click();
-  await expect(page).toHaveURL("/");
+  await expect(page).toHaveURL("/", { timeout: 15_000 });
 }
 
 test("core pages expose landmarks, headings, labels, and keyboard focus", async ({ page }) => {

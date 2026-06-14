@@ -16,7 +16,10 @@ export async function POST(request: Request): Promise<Response> {
     const actor = await requireRole("MARKETER");
     const limit = await rateLimit(`segment-ai:${actor.organizationId}:${actor.id}`, 10, 60);
     if (!limit.allowed) return Response.json({ error: "AI request limit exceeded" }, { status: 429, headers: { "retry-after": "60" } });
-    if (!isAiConfigured()) return Response.json({ error: "OpenRouter is not configured" }, { status: 503 });
+    if (!isAiConfigured()) {
+      console.warn(JSON.stringify({ level: "warn", event: "ai_not_configured", error: "OpenRouter API key is missing" }));
+      return Response.json({ error: "OpenRouter is not configured" }, { status: 503 });
+    }
     const input = requestSchema.parse(await request.json());
     const result = await generateText({
       model: crmLanguageModel(),
