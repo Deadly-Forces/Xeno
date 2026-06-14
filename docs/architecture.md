@@ -1,5 +1,18 @@
 # Architecture and Engineering Decisions
 
+## Source Layout
+
+`apps/crm` follows responsibility-based folders without an additional architecture layer:
+
+- `app/` contains Next.js routes, layouts, global styles, and thin page entrypoints.
+- `components/<domain>/` contains screen implementations and domain-specific client adapters.
+- `components/layout/` contains the application shell; `components/ui/` contains reusable primitives.
+- `lib/<domain>/` contains server-side business logic. `lib/core/` is limited to shared infrastructure.
+- `tests/unit/` mirrors server domains; `tests/integration/` covers workflows across boundaries.
+- `prisma/`, `scripts/`, and `e2e/` contain database, operational, and browser-test concerns respectively.
+
+Route files may validate transport input and shape responses. Reusable business behavior belongs in `lib/`, while reusable rendering and browser data access belong in `components/`.
+
 ## System Boundaries
 
 - The Next.js CRM owns identities, customers, segments, campaigns, experiments, decisions, audits, and analytics.

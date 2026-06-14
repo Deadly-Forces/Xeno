@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { usePathname } from "next/navigation";
-import { Drawer } from "./ui/drawer";
+import { Drawer } from "@/components/ui/drawer";
 
 const links = [
   { href: "/", label: "Overview", icon: LayoutDashboard },

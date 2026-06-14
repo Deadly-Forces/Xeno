@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { Navigation } from "../components/navigation";
-import { Providers } from "../components/providers";
-import { CommandPalette } from "../components/command-palette";
+import { CommandPalette } from "@/components/layout/command-palette";
+import { Navigation } from "@/components/layout/navigation";
+import { Providers } from "@/components/layout/providers";
 
 export const metadata: Metadata = { title: "Northstar CRM", description: "AI-native customer campaign operations" };
 

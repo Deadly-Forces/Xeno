@@ -41,6 +41,18 @@ test("autopilot preflight extracts marketer constraints", async ({ page }) => {
   expect(body.trace[0]?.detail).toContain("$75");
 });
 
+test("regenerate replaces both copy variants with the explicit offer", async ({ page }) => {
+  await signIn(page);
+  await page.goto("/campaigns/new");
+  await page
+    .getByLabel("Campaign objective and constraints")
+    .fill("high vaue customer can win back $100");
+  await page.getByRole("button", { name: /Build plan|Regenerate/ }).click();
+
+  await expect(page.getByLabel("Control message")).toHaveValue(/win back \$100/);
+  await expect(page.getByLabel("AI treatment")).toHaveValue(/win back \$100/);
+});
+
 test("generates validated segment DSL through the dedicated AI endpoint", async ({ page }) => {
   await signIn(page);
   const response = await page.request.post("/api/segments/ai", { data: { description: "Customers who spent more than $500" } });

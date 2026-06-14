@@ -2,7 +2,7 @@
 
 import { FileJson, Upload } from "lucide-react";
 import { useState } from "react";
-import { Dialog } from "../ui/dialog";
+import { Dialog } from "@/components/ui/dialog";
 
 const example = `[
   {

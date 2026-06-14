@@ -5,6 +5,7 @@ import { apiError } from "../../../../../lib/core/http";
 import { isResponse, requireRole } from "../../../../../lib/auth/rbac";
 import { scoreCustomer } from "../../../../../lib/decisioning/model";
 import { executeSegmentDSL } from "../../../../../lib/segments/execute";
+import { buildAutopilotCopy } from "../../../../../lib/campaigns/autopilot-copy";
 
 const schema = z.object({ intent: z.string().trim().min(12).max(2_000) });
 
@@ -48,12 +49,15 @@ export async function POST(request: Request): Promise<Response> {
     const segmentName = `Autopilot: ${inactiveDays}-day high-value win-back`;
     const existingSegment = await db.segment.findFirst({ where: { organizationId: actor.organizationId, name: segmentName, createdBy: "ai" }, select: { id: true } });
     const segment = existingSegment ? await db.segment.update({ where: { id: existingSegment.id }, data: { description: `Customers above $${valueFloor} lifetime value with no order in ${inactiveDays} days.`, filterRules: rules, customerCount: matched.length }, select: { id: true, name: true, description: true } }) : await db.segment.create({ data: { organizationId: actor.organizationId, name: segmentName, description: `Customers above $${valueFloor} lifetime value with no order in ${inactiveDays} days.`, filterRules: rules, customerCount: matched.length, createdBy: "ai" }, select: { id: true, name: true, description: true } });
-    const message = channel === "EMAIL" ? "Hi {{name}}, it has been a while. Come back to discover what is new for you, including picks inspired by {{lastProduct}}." : "Hi {{name}}, we miss you. Return to see new picks inspired by {{lastProduct}}.";
-    const treatmentMessage = "Hi {{name}}, your next favorite may already be waiting. Revisit picks inspired by {{lastProduct}} today.";
+    const generatedCopy = buildAutopilotCopy(intent, channel);
     const plan = {
       intent, segment: { ...segment, rules, matched: matched.length, eligible: eligible.length },
       recommendation: { channel, sendHour, reasoning: `${channel} is the dominant reachable preference in the eligible audience; ${sendHour}:00 is the mean recommended send hour.` },
-      copy: { control: message, treatment: treatmentMessage, hypothesis: "A curiosity-led personalized message will increase conversion versus a standard win-back reminder." },
+      copy: {
+        control: generatedCopy.control,
+        treatment: generatedCopy.treatment,
+        hypothesis: generatedCopy.hypothesis,
+      },
       estimates: { reach: contacted, holdout: eligible.length - contacted, excluded: excluded.length, unitCost, cost: estimatedCost, revenue: expectedRevenue, roi: estimatedCost ? ((expectedRevenue - estimatedCost) / estimatedCost) * 100 : 0, budget, withinBudget: estimatedCost <= budget },
       included: eligible.slice(0, 8).map(({ customer, decision }) => ({ id: customer.id, name: customer.name, city: customer.city, value: Number(customer.totalOrderValue), score: decision.decisionScore, reasons: decision.reasons })),
       excluded: excluded.slice(0, 12),
@@ -64,6 +68,7 @@ export async function POST(request: Request): Promise<Response> {
         { step: "Audience ranked", detail: `${eligible.length} eligible customers scored by conversion propensity and expected revenue.`, source: "Decision model rfm-v1" },
         { step: "Holdout assigned", detail: `${holdoutPercentage}% reserved deterministically for incremental-lift measurement.`, source: "Experiment policy" },
         { step: "Channel and time selected", detail: `${channel} at ${String(sendHour).padStart(2, "0")}:00 based on per-customer recommendations.`, source: "Decision model rfm-v1" },
+        { step: "Copy constraints preserved", detail: generatedCopy.preservedOffer ? `Both message variants preserve the explicit offer: ${generatedCopy.preservedOffer}.` : "No explicit customer incentive was detected; generic win-back copy was used.", source: "Marketer instruction" },
         { step: "Preflight estimated", detail: `$${estimatedCost.toFixed(2)} cost and $${expectedRevenue.toFixed(2)} probability-weighted revenue.`, source: "Rate card + model scores" }
       ]
     };
