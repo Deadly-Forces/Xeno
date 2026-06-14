@@ -19,7 +19,7 @@ function nextHour(hour: number, base: Date): Date {
 export async function launchCampaign(campaignId: string, organizationId = "org_xeno_default"): Promise<{ campaignId: string; enqueued: number; excluded: number }> {
   const acquired = await redis.set(`campaign:${campaignId}:launch-lock`, "1", "EX", 10, "NX");
   if (!acquired) throw new CampaignLaunchError("Campaign launch is already being processed", 429);
-  const campaign = await db.campaign.findFirst({ where: { id: campaignId, organizationId }, select: { id: true, organizationId: true, status: true, channel: true, messageTemplate: true, scheduledAt: true, targetingMode: true, targetPercentage: true, useRecommendedChannel: true, useRecommendedSendTime: true, segment: { select: { filterRules: true } }, experiment: { select: { id: true, controlAllocation: true, variants: { select: { id: true, kind: true, messageTemplate: true } } } } } });
+  const campaign = await db.campaign.findFirst({ where: { id: campaignId, organizationId }, select: { id: true, organizationId: true, status: true, channel: true, messageTemplate: true, scheduledAt: true, targetingMode: true, targetPercentage: true, useRecommendedChannel: true, useRecommendedSendTime: true, holdoutPercentage: true, segment: { select: { filterRules: true } }, experiment: { select: { id: true, controlAllocation: true, variants: { select: { id: true, kind: true, messageTemplate: true } } } } } });
   if (!campaign) throw new CampaignLaunchError("Campaign not found", 404);
   if (campaign.status !== "DRAFT") throw new CampaignLaunchError(`Campaign is already ${campaign.status}`, 409);
   const claimed = await db.campaign.updateMany({ where: { id: campaign.id, status: "DRAFT" }, data: { status: "RUNNING" } });
@@ -38,6 +38,7 @@ export async function launchCampaign(campaignId: string, organizationId = "org_x
     const messages = await db.$transaction(customers.map((customer) => {
       const decision = customer.decision;
       const profile = customer.customer;
+      const isHoldout = stableBucket(`holdout:${campaign.id}:${profile.id}`) < campaign.holdoutPercentage;
       const kind = stableBucket(`${campaign.id}:${profile.id}`) < (campaign.experiment?.controlAllocation ?? 100) ? "CONTROL" : "TREATMENT";
       const variant = campaign.experiment?.variants.find((item) => item.kind === kind);
       const template = variant?.messageTemplate ?? campaign.messageTemplate;
@@ -57,13 +58,15 @@ export async function launchCampaign(campaignId: string, organizationId = "org_x
         actualChannel,
         scheduledFor,
         recommendationReasons: decision.reasons
+        ,isHoldout
       }, select: { id: true, scheduledFor: true } });
     }));
     if (campaign.experiment) await db.campaignExperiment.update({ where: { id: campaign.experiment.id }, data: { status: "RUNNING", startedAt: new Date() } });
     const delay = Math.max(0, (campaign.scheduledAt?.getTime() ?? Date.now()) - Date.now());
-    await campaignQueue.addBulk(messages.map((message) => ({ name: "deliver", data: { kind: "deliver" as const, campaignMessageId: message.id }, opts: { ...campaignJobOptions, delay: Math.max(0, (message.scheduledFor?.getTime() ?? Date.now()) - Date.now()), jobId: message.id } })));
+    const deliverable = await db.campaignMessage.findMany({ where: { id: { in: messages.map((message) => message.id) }, isHoldout: false }, select: { id: true, scheduledFor: true } });
+    await campaignQueue.addBulk(deliverable.map((message) => ({ name: "deliver", data: { kind: "deliver" as const, campaignMessageId: message.id }, opts: { ...campaignJobOptions, delay: Math.max(0, (message.scheduledFor?.getTime() ?? Date.now()) - Date.now()), jobId: message.id } })));
     await campaignQueue.add("finalize", { kind: "finalize", campaignId: campaign.id }, { ...campaignJobOptions, attempts: 1, delay: delay + 45_000, jobId: `finalize-${campaign.id}` });
-    return { campaignId: campaign.id, enqueued: messages.length, excluded: candidates.length - messages.length };
+    return { campaignId: campaign.id, enqueued: deliverable.length, excluded: candidates.length - messages.length };
   } catch (error) {
     await db.campaign.update({ where: { id: campaign.id }, data: { status: "FAILED", failureReason: error instanceof Error ? error.message : "Launch failed" }, select: { id: true } });
     throw error;

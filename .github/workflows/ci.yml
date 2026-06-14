@@ -1,5 +1,18 @@
 name: CI
 on: [push, pull_request]
+env:
+  DATABASE_URL: postgresql://postgres:postgres@localhost:5432/xeno?schema=public
+  REDIS_URL: redis://localhost:6379
+  CHANNEL_SERVICE_URL: http://localhost:4000
+  CRM_RECEIPT_URL: http://localhost:3000
+  RECEIPT_HMAC_SECRET: ci-receipt-secret-at-least-32-characters
+  COMMERCE_HMAC_SECRET: ci-commerce-secret-at-least-32-characters
+  NEXTAUTH_SECRET: ci-nextauth-secret-at-least-32-characters
+  NEXTAUTH_URL: http://localhost:3000
+  MARKETER_EMAIL: marketer@example.com
+  MARKETER_PASSWORD_SHA256: 5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8
+  DEMO_PASSWORD: password
+  E2E_PASSWORD: password
 jobs:
   verify:
     runs-on: ubuntu-latest
@@ -13,19 +26,7 @@ jobs:
         image: redis:7-alpine
         ports: ["6379:6379"]
         options: --health-cmd "redis-cli ping" --health-interval 5s --health-timeout 3s --health-retries 10
-    env: &test-env
-      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/xeno?schema=public
-      REDIS_URL: redis://localhost:6379
-      CHANNEL_SERVICE_URL: http://localhost:4000
-      CRM_RECEIPT_URL: http://localhost:3000
-      RECEIPT_HMAC_SECRET: ci-receipt-secret-at-least-32-characters
-      COMMERCE_HMAC_SECRET: ci-commerce-secret-at-least-32-characters
-      NEXTAUTH_SECRET: ci-nextauth-secret-at-least-32-characters
-      NEXTAUTH_URL: http://localhost:3000
-      MARKETER_EMAIL: marketer@example.com
-      MARKETER_PASSWORD_SHA256: 5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8
-      DEMO_PASSWORD: password
-      E2E_PASSWORD: password
+    env:
       NODE_ENV: test
     steps:
       - uses: actions/checkout@v4
@@ -54,7 +55,6 @@ jobs:
         image: redis:7-alpine
         ports: ["6379:6379"]
     env:
-      <<: *test-env
       NODE_ENV: development
     steps:
       - uses: actions/checkout@v4

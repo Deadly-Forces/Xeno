@@ -17,6 +17,6 @@ sendRoute.post("/", async (context) => {
     const raced = await connection.get(idempotencyKey);
     return context.json({ accepted: true as const, externalId: raced ?? externalId, duplicate: true as const }, 200);
   }
-  await simulationQueue.add("simulate", { externalId }, { ...cleanup, jobId: externalId });
+  await simulationQueue.add("simulate", { externalId, ...(input.data.chaos ? { chaos: input.data.chaos } : {}) }, { ...cleanup, jobId: externalId });
   return context.json({ accepted: true as const, externalId }, 202);
 });

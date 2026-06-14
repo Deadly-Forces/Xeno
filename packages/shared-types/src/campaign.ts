@@ -17,6 +17,7 @@ export const sendMessageSchema = z.object({
   recipientPhone: z.string().min(7).max(30).nullable(),
   recipientEmail: z.string().email().nullable(),
   channel: channelSchema,
-  message: z.string().min(1).max(10_000)
+  message: z.string().min(1).max(10_000),
+  chaos: z.object({ failureRate: z.number().min(0).max(1), latencyMs: z.number().int().min(0).max(30_000), duplicateCallbacks: z.boolean(), outOfOrderCallbacks: z.boolean() }).optional()
 });
 export type SendMessage = z.infer<typeof sendMessageSchema>;

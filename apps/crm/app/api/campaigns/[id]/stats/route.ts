@@ -12,7 +12,7 @@ export async function GET(_: Request, context: { params: Promise<{ id: string }>
   const cacheKey = `campaign:${id}:stats`;
   const cached = await redis.get(cacheKey);
   if (cached) return new Response(cached, { headers: { "content-type": "application/json", "x-cache": "hit" } });
-  const campaign = await db.campaign.findFirst({ where: { id, organizationId: actor.organizationId }, select: { id: true, name: true, status: true, channel: true, messageTemplate: true, createdAt: true, failureReason: true, experiment: { select: { id: true, hypothesis: true, status: true, variants: { select: { id: true, name: true, kind: true } } } } } });
+  const campaign = await db.campaign.findFirst({ where: { id, organizationId: actor.organizationId }, select: { id: true, name: true, status: true, channel: true, messageTemplate: true, createdAt: true, failureReason: true, holdoutPercentage: true, maxBudget: true, failureRateThreshold: true, minimumConversionRate: true, guardrailPaused: true, guardrailReason: true, chaosEnabled: true, chaosFailureRate: true, chaosLatencyMs: true, chaosDuplicateCallbacks: true, chaosOutOfOrderCallbacks: true, experiment: { select: { id: true, hypothesis: true, status: true, variants: { select: { id: true, name: true, kind: true } } } } } });
   if (!campaign) return Response.json({ error: "Campaign not found" }, { status: 404 });
   const rows = await db.$queryRaw<StatsRow[]>`
     SELECT cm.status,
@@ -35,11 +35,21 @@ export async function GET(_: Request, context: { params: Promise<{ id: string }>
   }
   const decisioning = await db.campaignMessage.aggregate({ where: { campaignId: campaign.id }, _avg: { decisionScore: true, expectedRevenue: true, churnRisk: true }, _sum: { expectedRevenue: true } });
   const costs = await db.deliveryCostEvent.aggregate({ where: { organizationId: actor.organizationId, campaignMessage: { campaignId: campaign.id } }, _sum: { totalCost: true } });
-  const [receipts, audit] = await Promise.all([
+  const [receipts, audit, holdout] = await Promise.all([
     db.receiptEvent.findMany({ where: { campaignMessage: { campaignId: campaign.id } }, take: 12, orderBy: { timestamp: "desc" }, select: { id: true, event: true, timestamp: true } }),
-    db.auditLog.findMany({ where: { organizationId: actor.organizationId, entityId: campaign.id }, take: 8, orderBy: { createdAt: "desc" }, select: { id: true, action: true, actorEmail: true, createdAt: true } })
+    db.auditLog.findMany({ where: { organizationId: actor.organizationId, entityId: campaign.id }, take: 20, orderBy: { createdAt: "desc" }, select: { id: true, action: true, actorEmail: true, metadata: true, createdAt: true } }),
+    db.campaignMessage.findMany({ where: { campaignId: campaign.id, isHoldout: true }, select: { id: true, customerId: true, customer: { select: { orders: { where: { createdAt: { gte: campaign.createdAt } }, select: { id: true, totalAmount: true } } } } } })
   ]);
-  const result = { campaign, counts, conversions: rows.reduce((sum, row) => sum + Number(row.conversions), 0), revenue: rows.reduce((sum, row) => sum + Number(row.revenue?.toString() ?? 0), 0), providerCost: Number(costs._sum.totalCost ?? 0), experiment, decisioning: { averageScore: decisioning._avg.decisionScore ?? 0, averageChurnRisk: decisioning._avg.churnRisk ?? 0, expectedRevenue: Number(decisioning._sum.expectedRevenue ?? 0) }, timeline: [...receipts.map((item) => ({ id: item.id, label: item.event.toLowerCase(), detail: "Delivery event", createdAt: item.timestamp })), ...audit.map((item) => ({ id: item.id, label: item.action, detail: item.actorEmail, createdAt: item.createdAt }))].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()).slice(0, 12) };
+  const contacted = rows.reduce((sum, row) => sum + Number(row.messageCount), 0) - holdout.length;
+  const contactedConversions = rows.reduce((sum, row) => sum + Number(row.conversions), 0);
+  const holdoutConversions = holdout.filter((item) => item.customer.orders.length > 0).length;
+  const contactedRate = contacted > 0 ? contactedConversions / contacted : 0;
+  const holdoutRate = holdout.length > 0 ? holdoutConversions / holdout.length : 0;
+  const incrementalLift = holdoutRate > 0 ? (contactedRate - holdoutRate) / holdoutRate : contactedRate > 0 ? 1 : 0;
+  const standardError = Math.sqrt((contactedRate * (1 - contactedRate)) / Math.max(1, contacted) + (holdoutRate * (1 - holdoutRate)) / Math.max(1, holdout.length));
+  const liftLow = contactedRate - holdoutRate - 1.96 * standardError;
+  const liftHigh = contactedRate - holdoutRate + 1.96 * standardError;
+  const result = { campaign: { ...campaign, maxBudget: campaign.maxBudget === null ? null : Number(campaign.maxBudget) }, counts, conversions: rows.reduce((sum, row) => sum + Number(row.conversions), 0), revenue: rows.reduce((sum, row) => sum + Number(row.revenue?.toString() ?? 0), 0), providerCost: Number(costs._sum.totalCost ?? 0), experiment, holdout: { recipients: holdout.length, conversions: holdoutConversions, contactedRate, holdoutRate, incrementalLift, confidence: Math.min(0.99, Math.sqrt(Math.max(0, contacted + holdout.length)) / 20), liftLow, liftHigh }, decisioning: { averageScore: decisioning._avg.decisionScore ?? 0, averageChurnRisk: decisioning._avg.churnRisk ?? 0, expectedRevenue: Number(decisioning._sum.expectedRevenue ?? 0) }, timeline: [...receipts.map((item) => ({ id: item.id, label: item.event.toLowerCase(), detail: "Delivery event", createdAt: item.timestamp })), ...audit.map((item) => ({ id: item.id, label: item.action, detail: item.metadata ? JSON.stringify(item.metadata) : item.actorEmail, createdAt: item.createdAt }))].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()).slice(0, 20) };
   await redis.set(cacheKey, JSON.stringify(result), "EX", 5);
   return Response.json(result);
 }

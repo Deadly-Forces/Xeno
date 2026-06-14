@@ -1,7 +1,7 @@
 "use client";
 
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, Download, Mail, Radio, Smartphone } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { AlertTriangle, Bot, Download, FlaskConical, Mail, Pause, Play, Radio, ShieldCheck, Smartphone } from "lucide-react";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Badge } from "../../../components/ui/badge";
@@ -14,6 +14,16 @@ type Stats = {
     channel: string;
     messageTemplate: string;
     failureReason: string | null;
+    maxBudget: number | null;
+    failureRateThreshold: number;
+    minimumConversionRate: number;
+    guardrailPaused: boolean;
+    guardrailReason: string | null;
+    chaosEnabled: boolean;
+    chaosFailureRate: number;
+    chaosLatencyMs: number;
+    chaosDuplicateCallbacks: boolean;
+    chaosOutOfOrderCallbacks: boolean;
   };
   counts: Record<string, number>;
   conversions: number;
@@ -49,6 +59,7 @@ type Stats = {
       winner: string;
     };
   };
+  holdout: { recipients: number; conversions: number; contactedRate: number; holdoutRate: number; incrementalLift: number; confidence: number; liftLow: number; liftHigh: number };
 };
 
 export default function CampaignDetailPage(): JSX.Element {
@@ -69,6 +80,7 @@ export default function CampaignDetailPage(): JSX.Element {
         ? 8_000
         : false,
   });
+  const control = useMutation({ mutationFn: async (action: "pause" | "resume") => { const response = await fetch(`/api/campaigns/${params.id}/controls`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action }) }); if (!response.ok) throw new Error("Unable to update campaign controls"); }, onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["campaign", params.id] }) });
   useEffect(() => {
     let socket: WebSocket | undefined;
     let cancelled = false;
@@ -187,10 +199,9 @@ export default function CampaignDetailPage(): JSX.Element {
             </p>
           ) : null}
         </div>
-        <a className="btn" href={`/api/campaigns/${params.id}/export`} download>
-          <Download size={16} /> Export CSV
-        </a>
+        <div className="flex gap-2"><button className="btn" disabled={control.isPending} onClick={() => control.mutate(data.campaign.guardrailPaused ? "resume" : "pause")}>{data.campaign.guardrailPaused ? <Play size={16} /> : <Pause size={16} />}{data.campaign.guardrailPaused ? "Resume" : "Pause"}</button><a className="btn" href={`/api/campaigns/${params.id}/export`} download><Download size={16} /> Export CSV</a></div>
       </header>
+      {data.campaign.guardrailPaused && <section className="flex items-start gap-3 rounded-md border border-[#e4b8ad] bg-[#fff3f0] p-4 text-sm text-[#8d3526]"><ShieldCheck className="shrink-0" size={19} /><div><strong>Campaign paused by guardrail</strong><p className="mt-1">{data.campaign.guardrailReason ?? "Operator review required before delivery resumes."}</p></div></section>}
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {[
           {
@@ -321,6 +332,11 @@ export default function CampaignDetailPage(): JSX.Element {
           </article>
         ))}
       </section>
+      <section className="grid gap-4 lg:grid-cols-[1.35fr_1fr]">
+        <article className="panel p-5"><div className="flex items-center gap-2"><Bot size={18} className="text-accent" /><h2 className="font-semibold">AI post-campaign analyst</h2></div><p className="mt-4 text-sm leading-6 text-[#42554e]">{sent === 0 ? "Delivery has not started, so no performance conclusion is justified yet." : conversions === 0 ? `The campaign sent ${sent.toLocaleString()} messages with no attributed purchases. The largest measurable drop is ${funnel.slice(1).sort((a, b) => (funnel[funnel.indexOf(a) - 1]?.count ?? 0) - a.count - ((funnel[funnel.indexOf(b) - 1]?.count ?? 0) - b.count))[0]?.label.toLowerCase() ?? "delivery"}; wait for the attribution window before changing strategy.` : `The campaign produced ${conversions.toLocaleString()} attributed conversions and $${revenue.toFixed(2)} revenue from ${sent.toLocaleString()} sends. Actual ROI is ${providerCost ? `${(((revenue - providerCost) / providerCost) * 100).toFixed(0)}%` : "not available until provider costs arrive"}.`}</p><div className="mt-4 rounded-md bg-[#f2f5f3] p-3 text-xs text-[#64716c]">Grounded in message states, conversion events, provider cost events, and experiment assignments shown on this page.</div></article>
+        <article className="panel p-5"><p className="label mb-2">No-send holdout</p><h2 className="font-semibold">Incremental lift</h2><strong className="mt-4 block text-3xl">{(data.holdout.incrementalLift * 100).toFixed(1)}%</strong><p className="text-xs text-[#71807a]">{data.holdout.recipients} held out · 95% CI {(data.holdout.liftLow * 100).toFixed(1)} to {(data.holdout.liftHigh * 100).toFixed(1)} points</p><div className="mt-4 grid grid-cols-2 gap-3 text-sm"><div className="rounded-md bg-[#f2f5f3] p-3"><strong>{(data.holdout.contactedRate * 100).toFixed(2)}%</strong><p className="text-xs text-[#71807a]">Contacted conversion</p></div><div className="rounded-md bg-[#f2f5f3] p-3"><strong>{(data.holdout.holdoutRate * 100).toFixed(2)}%</strong><p className="text-xs text-[#71807a]">Holdout conversion</p></div></div></article>
+      </section>
+      <section className="grid gap-4 lg:grid-cols-2"><article className="panel p-5"><div className="flex items-center gap-2"><ShieldCheck size={18} className="text-accent" /><h2 className="font-semibold">Adaptive guardrails</h2></div><div className="mt-4 grid grid-cols-3 gap-3 text-sm"><div><span className="label">Budget</span><strong className="mt-1 block">{data.campaign.maxBudget === null ? "None" : `$${data.campaign.maxBudget.toFixed(2)}`}</strong></div><div><span className="label">Failure stop</span><strong className="mt-1 block">{Math.round(data.campaign.failureRateThreshold * 100)}%</strong></div><div><span className="label">Conversion floor</span><strong className="mt-1 block">{(data.campaign.minimumConversionRate * 100).toFixed(1)}%</strong></div></div></article><article className="panel p-5"><div className="flex items-center gap-2"><FlaskConical size={18} className={data.campaign.chaosEnabled ? "text-[#d9674f]" : "text-[#71807a]"} /><h2 className="font-semibold">Channel-service chaos mode</h2></div><p className="mt-3 text-sm text-[#64716c]">{data.campaign.chaosEnabled ? `${Math.round(data.campaign.chaosFailureRate * 100)}% injected failures · ${data.campaign.chaosLatencyMs}ms latency · ${data.campaign.chaosDuplicateCallbacks ? "duplicate callbacks" : "no duplicates"} · ${data.campaign.chaosOutOfOrderCallbacks ? "out-of-order callbacks" : "ordered callbacks"}` : "Disabled for this campaign."}</p></article></section>
       <section className="grid gap-4 lg:grid-cols-[1.3fr_1fr]">
         {data.experiment && (
           <article className="panel p-5">

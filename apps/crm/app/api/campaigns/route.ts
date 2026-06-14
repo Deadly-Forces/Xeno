@@ -17,6 +17,15 @@ const schema = z.object({
   ,targetPercentage: z.number().int().min(1).max(100).default(100)
   ,useRecommendedChannel: z.boolean().default(false)
   ,useRecommendedSendTime: z.boolean().default(false)
+  ,holdoutPercentage: z.number().int().min(0).max(25).default(0)
+  ,maxBudget: z.number().positive().nullable().optional()
+  ,failureRateThreshold: z.number().min(0.01).max(1).default(0.15)
+  ,minimumConversionRate: z.number().min(0).max(1).default(0)
+  ,chaosEnabled: z.boolean().default(false)
+  ,chaosFailureRate: z.number().min(0).max(1).default(0)
+  ,chaosLatencyMs: z.number().int().min(0).max(30_000).default(0)
+  ,chaosDuplicateCallbacks: z.boolean().default(false)
+  ,chaosOutOfOrderCallbacks: z.boolean().default(false)
 });
 
 export async function GET(): Promise<Response> {
@@ -28,10 +37,11 @@ export async function POST(request: Request): Promise<Response> {
   try {
     const actor = await requireRole("MARKETER");
     const input = schema.parse(await request.json());
-    const { experiment, ...campaignInput } = input;
+    const { experiment, maxBudget, ...campaignInput } = input;
     const campaign = await db.campaign.create({ data: {
       ...campaignInput, organizationId: actor.organizationId,
       scheduledAt: campaignInput.scheduledAt ? new Date(campaignInput.scheduledAt) : null,
+      ...(maxBudget !== undefined ? { maxBudget } : {}),
       ...(experiment ? { experiment: { create: { hypothesis: experiment.hypothesis, controlAllocation: experiment.controlAllocation, variants: { create: [
         { name: "Control", kind: "CONTROL", messageTemplate: input.messageTemplate },
         { name: "AI treatment", kind: "TREATMENT", messageTemplate: experiment.treatmentTemplate }

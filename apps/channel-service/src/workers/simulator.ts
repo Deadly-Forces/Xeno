@@ -3,6 +3,7 @@ import { Worker } from "bullmq";
 import pino from "pino";
 import { env } from "../lib/env.js";
 import { callbackQueue, cleanup, connection } from "../lib/queue.js";
+import type { ChaosOptions } from "../lib/queue.js";
 
 const logger = pino({ level: env.LOG_LEVEL });
 const events = [
@@ -13,14 +14,22 @@ const events = [
 ];
 
 export function startWorkers(): Array<Worker> {
-  const simulator = new Worker<{ externalId: string }>("channel-simulation", async (job) => {
+  const simulator = new Worker<{ externalId: string; chaos?: ChaosOptions }>("channel-simulation", async (job) => {
     const fate = Math.random();
-    if (fate > 0.9) {
-      await callbackQueue.add("callback", { externalId: job.data.externalId, event: "FAILED", timestamp: new Date(Date.now() + 2_000).toISOString() }, { ...cleanup, delay: 2_000, attempts: 2, backoff: { type: "fixed", delay: 3_000 } });
+    const chaos = job.data.chaos;
+    const baseLatency = chaos?.latencyMs ?? 0;
+    if (fate > 0.9 || (chaos && fate < chaos.failureRate)) {
+      await callbackQueue.add("callback", { externalId: job.data.externalId, event: "FAILED", timestamp: new Date(Date.now() + 2_000 + baseLatency).toISOString() }, { ...cleanup, delay: 2_000 + baseLatency, attempts: 2, backoff: { type: "fixed", delay: 3_000 } });
       return;
     }
-    for (const item of events) {
-      if (fate <= item.probability) await callbackQueue.add("callback", { externalId: job.data.externalId, event: item.event, timestamp: new Date(Date.now() + item.delay).toISOString() }, { ...cleanup, delay: item.delay });
+    for (const [index, item] of events.entries()) {
+      if (fate <= item.probability) {
+        const reorderedDelay = chaos?.outOfOrderCallbacks ? events[events.length - 1 - index]!.delay : item.delay;
+        const delay = reorderedDelay + baseLatency;
+        const data = { externalId: job.data.externalId, event: item.event, timestamp: new Date(Date.now() + delay).toISOString() };
+        await callbackQueue.add("callback", data, { ...cleanup, delay });
+        if (chaos?.duplicateCallbacks) await callbackQueue.add("callback", data, { ...cleanup, delay: delay + 250 });
+      }
     }
   }, { connection, concurrency: 100 });
 
