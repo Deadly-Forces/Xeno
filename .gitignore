@@ -1,14 +1,32 @@
+# Dependencies
 node_modules
+
+# Build output
 .next
 dist
 ws-dist
 coverage
+tsconfig.tsbuildinfo
+
+# Turborepo
 .turbo
+
+# Environment
 .env
 .env.local
 .setup-secrets.env
-playwright-report
-test-results
+
+# Dev logs
 *.log
 .logs/
+.channel-dev.*
+.crm-dev.*
+.dev.*
+
+# Test artifacts
+playwright-report
+test-results
+walkthrough-artifacts/
+
+# Database
 apps/crm/prisma/dev.db
