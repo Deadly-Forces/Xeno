@@ -335,6 +335,7 @@ export default function NewCampaignPage(): JSX.Element {
               <div>
                 <label className="label">Campaign name</label>
                 <input
+                  aria-label="Campaign name"
                   className="input mt-1"
                   value={name}
                   onChange={(event) => setName(event.target.value)}
@@ -358,6 +359,7 @@ export default function NewCampaignPage(): JSX.Element {
               <div>
                 <label className="label">Control message</label>
                 <textarea
+                  aria-label="Control message"
                   className="input mt-1 min-h-32 resize-none"
                   value={message}
                   onChange={(event) => setMessage(event.target.value)}
@@ -369,6 +371,7 @@ export default function NewCampaignPage(): JSX.Element {
               <div className="rounded-md border border-line bg-[#f8faf9] p-4">
                 <label className="flex items-center gap-3 text-sm font-semibold">
                   <input
+                    aria-label="Run randomized A/B experiment"
                     type="checkbox"
                     checked={experimentEnabled}
                     onChange={(event) =>
@@ -382,6 +385,7 @@ export default function NewCampaignPage(): JSX.Element {
                     <div>
                       <label className="label">Hypothesis</label>
                       <input
+                        aria-label="Experiment hypothesis"
                         className="input mt-1"
                         value={hypothesis}
                         onChange={(event) => setHypothesis(event.target.value)}
@@ -390,6 +394,7 @@ export default function NewCampaignPage(): JSX.Element {
                     <div>
                       <label className="label">AI treatment message</label>
                       <textarea
+                        aria-label="AI treatment message"
                         className="input mt-1 min-h-28 resize-none"
                         value={treatmentMessage}
                         onChange={(event) =>
@@ -490,6 +495,7 @@ export default function NewCampaignPage(): JSX.Element {
                 <div className="mt-4 max-w-sm">
                   <label className="label">Send date and time</label>
                   <input
+                    aria-label="Send date and time"
                     className="input mt-1"
                     type="datetime-local"
                     min={new Date().toISOString().slice(0, 16)}
@@ -501,6 +507,7 @@ export default function NewCampaignPage(): JSX.Element {
               <div className="mt-5 space-y-3 rounded-md border border-line bg-[#f8faf9] p-4">
                 <label className="flex items-center gap-2 text-sm font-semibold">
                   <input
+                    aria-label="Send only to top-scored customers"
                     type="checkbox"
                     checked={scoreTargeting}
                     onChange={(event) =>
@@ -513,6 +520,7 @@ export default function NewCampaignPage(): JSX.Element {
                   <label className="block text-sm">
                     Top {targetPercentage}%
                     <input
+                      aria-label="Top-scored customer percentage"
                       className="mt-2 w-full accent-[#147d64]"
                       type="range"
                       min="5"
@@ -527,6 +535,7 @@ export default function NewCampaignPage(): JSX.Element {
                 )}
                 <label className="flex items-center gap-2 text-sm">
                   <input
+                    aria-label="Automatically apply recommended channel"
                     type="checkbox"
                     checked={recommendedChannel}
                     onChange={(event) =>
@@ -537,6 +546,7 @@ export default function NewCampaignPage(): JSX.Element {
                 </label>
                 <label className="flex items-center gap-2 text-sm">
                   <input
+                    aria-label="Automatically apply per-customer send hour"
                     type="checkbox"
                     checked={recommendedTime}
                     onChange={(event) =>

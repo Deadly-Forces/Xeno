@@ -65,7 +65,9 @@ export default function CampaignDetailPage(): JSX.Element {
       return response.json() as Promise<Stats>;
     },
     refetchInterval: () =>
-      document.visibilityState === "visible" ? 8_000 : false,
+      typeof document === "undefined" || document.visibilityState === "visible"
+        ? 8_000
+        : false,
   });
   useEffect(() => {
     let socket: WebSocket | undefined;

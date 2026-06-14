@@ -96,6 +96,7 @@ export default function CustomersPage(): JSX.Element {
               size={16}
             />
             <input
+              aria-label="Search customers"
               value={query}
               onChange={(event) => {
                 setQuery(event.target.value);
@@ -106,6 +107,7 @@ export default function CustomersPage(): JSX.Element {
             />
           </div>
           <select
+            aria-label="Filter by segment"
             className="input"
             value={segment}
             onChange={(event) => {
@@ -121,6 +123,7 @@ export default function CustomersPage(): JSX.Element {
             ))}
           </select>
           <select
+            aria-label="Sort customers by"
             className="input"
             value={sort}
             onChange={(event) => {
@@ -134,6 +137,7 @@ export default function CustomersPage(): JSX.Element {
             <option value="lastOrderAt">Last order</option>
           </select>
           <select
+            aria-label="Sort direction"
             className="input"
             value={direction}
             onChange={(event) => {

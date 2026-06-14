@@ -128,6 +128,6 @@ export function AIChatSidebar({ onDraft, onRecommendation, onSegmentCreated }: {
       {isLoading && <p className="text-xs text-[#75817d]">Thinking...</p>}
       {error && <p className="rounded bg-red-50 p-2 text-xs text-red-700">The campaign assistant could not complete that request. Please try again.</p>}
     </div>
-    <form onSubmit={handleSubmit} className="border-t border-line p-3"><div className="flex min-w-0 gap-2"><input className="input min-w-0" value={input} onChange={(e) => setInput(e.target.value)} placeholder="Ask for a segment or message..." /><button className="btn btn-primary size-10 shrink-0 p-0" aria-label="Send"><Send size={16} /></button></div></form>
+    <form onSubmit={handleSubmit} className="border-t border-line p-3"><div className="flex min-w-0 gap-2"><input aria-label="Ask campaign copilot" className="input min-w-0" value={input} onChange={(e) => setInput(e.target.value)} placeholder="Ask for a segment or message..." /><button className="btn btn-primary size-10 shrink-0 p-0" aria-label="Send"><Send size={16} /></button></div></form>
   </aside>;
 }
