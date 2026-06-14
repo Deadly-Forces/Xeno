@@ -39,6 +39,7 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
+      - run: cp .env.example .env
       - run: docker compose config
       - run: docker build -f apps/crm/Dockerfile -t xeno-crm .
       - run: docker build -f apps/channel-service/Dockerfile -t xeno-channel .
